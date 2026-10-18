@@ -50,6 +50,7 @@ export class EvolutionScene extends Modal<boolean> {
     g: Game,
     private mon: Mon,
     private to: number,
+    private noCancel = false,
   ) {
     super();
     this.g = g;
@@ -97,7 +98,7 @@ export class EvolutionScene extends Modal<boolean> {
     const p = this.t;
     const period = Math.max(3, 24 - Math.floor(p / 10));
     this.showNew = Math.floor(p / period) % 2 === 1;
-    if (this.g.input.pressed('b')) {
+    if (this.g.input.pressed('b') && !this.noCancel) {
       this.cancelled = true;
       this.showNew = false;
       this.phase = 'done';

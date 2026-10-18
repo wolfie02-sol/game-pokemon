@@ -31,7 +31,7 @@ export interface Stats {
   spc: number;
 }
 
-export const MAX_LEVEL = 60;
+export const MAX_LEVEL = 100;
 
 export function expFor(lvl: number): number {
   if (lvl <= 1) return 0;
@@ -95,6 +95,19 @@ export function healMon(m: Mon) {
   for (const mv of m.moves) mv.pp = move(mv.id).pp;
 }
 
+/** Restore PP: amount per move (99 = full). */
+export function restorePP(m: Mon, amount: number): boolean {
+  let any = false;
+  for (const mv of m.moves) {
+    const max = move(mv.id).pp;
+    if (mv.pp < max) {
+      mv.pp = Math.min(max, mv.pp + amount);
+      any = true;
+    }
+  }
+  return any;
+}
+
 export function isAlive(m: Mon): boolean {
   return m.hp > 0;
 }
@@ -134,8 +147,14 @@ export function knowsMove(m: Mon, id: string) {
 /** Pending evolution for this mon, if its level qualifies. */
 export function evolutionFor(m: Mon): number | null {
   const s = species(m.sp);
-  if (s.evo && m.lvl >= s.evo.lvl) return s.evo.to;
-  return null;
+  const e = s.evos.find((x) => x.lvl && m.lvl >= x.lvl);
+  return e ? e.to : null;
+}
+
+/** Evolution triggered by using a shard item on this mon. */
+export function evolutionByItem(m: Mon, itemId: string): number | null {
+  const e = species(m.sp).evos.find((x) => x.item === itemId);
+  return e ? e.to : null;
 }
 
 export function evolve(m: Mon, to: number) {

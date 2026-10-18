@@ -1,0 +1,26 @@
+import { creatureSprite } from '../src/game/art/creatures';
+import { ALL_SPECIES } from '../src/game/data/species';
+const params = new URLSearchParams(location.search);
+const from = parseInt(params.get('from') ?? '1');
+const n = parseInt(params.get('n') ?? '40');
+const back = params.get('back') === '1';
+const cols = 8;
+const cv = document.createElement('canvas');
+const list = ALL_SPECIES.slice(from - 1, from - 1 + n);
+cv.width = cols * 52 * 3;
+cv.height = Math.ceil(list.length / cols) * 60 * 3;
+document.body.appendChild(cv);
+const c = cv.getContext('2d')!;
+c.imageSmoothingEnabled = false;
+c.fillStyle = '#f8f4e8';
+c.fillRect(0, 0, cv.width, cv.height);
+c.scale(3, 3);
+list.forEach((s, i) => {
+  const x = (i % cols) * 52;
+  const y = Math.floor(i / cols) * 60;
+  c.drawImage(creatureSprite(s.id, back), x + 2, y);
+  c.fillStyle = '#222';
+  c.font = '6px monospace';
+  c.fillText(`${s.id} ${s.name}`, x + 1, y + 56);
+});
+(window as any).done = true;

@@ -150,7 +150,7 @@ export function SettingsDialog({ game, layout, onClose }: { game: Game; layout: 
           <label htmlFor="import-code" className="small">
             Paste a save code to import it (replaces this browser's save):
           </label>
-          <textarea id="import-code" rows={3} value={importText} onChange={(e: { target: { value: string } }) => setImportText(e.target.value)} placeholder="WKE1:…" />
+          <textarea id="import-code" rows={3} value={importText} onChange={(e: { target: { value: string } }) => setImportText(e.target.value)} placeholder="WKE2:…" />
           <div className="row">
             <button type="button" className="pill-btn ghost" onClick={doImport} disabled={!importText.trim()}>
               Import save

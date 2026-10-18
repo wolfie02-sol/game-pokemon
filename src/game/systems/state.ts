@@ -27,7 +27,7 @@ export const DEFAULT_OPTIONS: Options = {
 };
 
 export interface GameState {
-  version: 1;
+  version: 2;
   name: string;
   rival: string;
   map: string;
@@ -51,11 +51,13 @@ export interface GameState {
   uid: number;
   starter: number;
   savedAt: number;
+  /** riding the driftboard */
+  surfing?: boolean;
 }
 
 export function newState(rng: Rng): GameState {
   return {
-    version: 1,
+    version: 2,
     name: 'REN',
     rival: 'VEX',
     map: 'home',
@@ -81,7 +83,8 @@ export function newState(rng: Rng): GameState {
   };
 }
 
-export const BADGES = ['SPROUT', 'CINDER', 'GALE'] as const;
+export const BADGES = ['BOULDER', 'RIPPLE', 'SPARK', 'BLOOM', 'VENOM', 'MIND', 'CINDER', 'FROST'] as const;
+export const BADGE_COLORS = ['#a08850', '#4890f0', '#f0c828', '#58b848', '#a858c0', '#f060a0', '#f07830', '#78d0e8'];
 
 export function flag(s: GameState, k: string): boolean {
   return !!s.flags[k];

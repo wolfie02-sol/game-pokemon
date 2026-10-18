@@ -10,9 +10,10 @@ export interface Stages {
   spd: number;
   spc: number;
   acc: number;
+  eva: number;
 }
 
-export const emptyStages = (): Stages => ({ atk: 0, def: 0, spd: 0, spc: 0, acc: 0 });
+export const emptyStages = (): Stages => ({ atk: 0, def: 0, spd: 0, spc: 0, acc: 0, eva: 0 });
 
 export function stageMul(st: number): number {
   return st >= 0 ? (2 + st) / 2 : 2 / (2 - st);
@@ -26,9 +27,25 @@ export interface Fighter {
   mon: Mon;
   stages: Stages;
   flinch: boolean;
+  /** turns of confusion left */
+  conf?: number;
+  /** badly-poisoned counter */
+  toxic?: number;
+  seeded?: boolean;
+  /** turns left bound by a trapping move */
+  trap?: number;
+  /** must skip the next turn */
+  recharge?: boolean;
+  reflect?: number;
+  light?: number;
 }
 
-export function effStat(f: Fighter, key: Exclude<StatKey, 'acc'>): number {
+/** Fresh battle state for a Wildkin entering the field. */
+export function fighter(mon: Mon): Fighter {
+  return { mon, stages: emptyStages(), flinch: false };
+}
+
+export function effStat(f: Fighter, key: Exclude<StatKey, 'acc' | 'eva'>): number {
   const s = stats(f.mon);
   let v = s[key] * stageMul(f.stages[key]);
   if (key === 'spd' && f.mon.status === 'PAR') v *= 0.25;
@@ -45,11 +62,16 @@ export interface DamageResult {
 export function calcDamage(rng: Rng, atk: Fighter, def: Fighter, mv: MoveDef, rollRandom = true): DamageResult {
   const eff = effectiveness(mv.type, species(def.mon.sp).types);
   if (eff === 0 || mv.pow === 0) return { damage: 0, eff, crit: false };
+  if (mv.fixed) {
+    const dmg = mv.fixed === 'level' ? atk.mon.lvl : mv.fixed === 'half' ? Math.max(1, Math.floor(def.mon.hp / 2)) : mv.fixed;
+    return { damage: dmg, eff: 1, crit: false };
+  }
   const critChance = mv.highCrit ? 1 / 4 : 1 / 16;
   const crit = rollRandom ? rng.chance(critChance) : false;
   const phys = mv.cat === 'phys';
   let a = effStat(atk, phys ? 'atk' : 'spc');
   let d = effStat(def, phys ? 'def' : 'spc');
+  if (mv.explode) d = Math.max(1, Math.floor(d / 2));
   if (crit) {
     // crits ignore the attacker's negative and defender's positive stages
     const sa = stats(atk.mon);
@@ -59,6 +81,8 @@ export function calcDamage(rng: Rng, atk: Fighter, def: Fighter, mv: MoveDef, ro
   }
   const lvl = atk.mon.lvl;
   let dmg = Math.floor(Math.floor((Math.floor((2 * lvl) / 5 + 2) * mv.pow * a) / d) / 50) + 2;
+  if (!crit && phys && def.reflect) dmg = Math.floor(dmg / 2);
+  if (!crit && !phys && def.light) dmg = Math.floor(dmg / 2);
   if (crit) dmg = Math.floor(dmg * 1.75);
   if (species(atk.mon.sp).types.includes(mv.type)) dmg = Math.floor(dmg * 1.5);
   dmg = Math.floor(dmg * eff);
@@ -68,8 +92,9 @@ export function calcDamage(rng: Rng, atk: Fighter, def: Fighter, mv: MoveDef, ro
 
 export function hits(rng: Rng, atk: Fighter, def: Fighter, mv: MoveDef): boolean {
   if (mv.acc === 0) return true;
-  const p = (mv.acc / 100) * accMul(atk.stages.acc);
-  return rng.next() < Math.min(1, p) * (def.mon.status === 'SLP' ? 1 : 1);
+  const stage = Math.max(-6, Math.min(6, atk.stages.acc - def.stages.eva));
+  const p = (mv.acc / 100) * accMul(stage);
+  return rng.next() < Math.min(1, p);
 }
 
 /** Returns true if `a` moves before `b`. */
@@ -125,6 +150,11 @@ export function chooseAiMove(rng: Rng, me: Fighter, foe: Fighter, smart: boolean
     if (mv.cat === 'status') {
       score = 12;
       if (mv.status && foe.mon.status) score = 0;
+      if (mv.conf && foe.conf) score = 0;
+      if (mv.seed && (foe.seeded || species(foe.mon.sp).types.includes('LEAF'))) score = 0;
+      if (mv.screen && (mv.screen === 'reflect' ? me.reflect : me.light)) score = 0;
+      if (mv.haze) score = foe.stages.atk + foe.stages.spc + foe.stages.spd > 1 ? 30 : 0;
+      if (mv.rest) score = me.mon.hp / maxHp(me.mon) < 0.35 ? 55 : 0;
       if (mv.heal) score = me.mon.hp / maxHp(me.mon) < 0.45 ? 60 : 0;
       if (mv.stat) {
         const target = mv.stat.who === 'self' ? me : foe;
@@ -134,8 +164,11 @@ export function chooseAiMove(rng: Rng, me: Fighter, foe: Fighter, smart: boolean
       }
     } else {
       const { damage, eff } = calcDamage(rng, me, foe, mv, false);
-      score = eff === 0 ? 0 : damage * ((mv.acc || 100) / 100);
-      if (damage >= foe.mon.hp) score += 200;
+      const hitsN = mv.multi ? (mv.multi[0] + mv.multi[1]) / 2 : 1;
+      score = eff === 0 ? 0 : damage * hitsN * ((mv.acc || 100) / 100);
+      if (mv.explode) score = me.mon.hp / maxHp(me.mon) < 0.3 ? score : score * 0.2;
+      if (mv.recharge) score *= 0.7;
+      if (damage * hitsN >= foe.mon.hp && !mv.explode) score += 200;
     }
     return { slot, mv, score };
   });

@@ -82,6 +82,44 @@ const TRACKS: Record<string, Track> = {
       drum: 'k:2 h:2 k:2 h:2 k:2 h:2 k:2 h:2 k:2 h:2 k:2 h:2 k:2 h:2 s:2 s:2 k:2 h:2 k:2 h:2 k:2 h:2 k:2 h:2 k:2 h:2 k:2 h:2 k:2 h:2 s:2 s:2',
     },
   },
+  city: {
+    bpm: 124,
+    loop: {
+      lead: 'E5:2 G5:2 C6:2 G5:2 A5:2 G5:2 E5:4 F5:2 A5:2 D6:2 C6:2 B5:6 -:2 E5:2 G5:2 C6:2 E6:2 D6:2 C6:2 A5:4 F5:2 G5:2 B5:2 D6:2 C6:6 -:2',
+      bass: 'C3:2 G3:2 E3:2 G3:2 A2:2 E3:2 A2:2 E3:2 F2:2 C3:2 F3:2 C3:2 G2:2 D3:2 G3:2 D3:2 C3:2 G3:2 E3:2 G3:2 A2:2 E3:2 A2:2 E3:2 F2:2 C3:2 G2:2 D3:2 C3:4 G2:4',
+      drum: 'k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 k:2 h:2 s:2 h:2 k:2 h:2 s:4',
+    },
+  },
+  tower: {
+    bpm: 84,
+    loop: {
+      lead: 'A4:4 C5:4 E5:4 D5:4 C5:4 B4:4 A4:8 F4:4 A4:4 C5:4 B4:4 G#4:8 -:8 A4:4 E5:4 D5:4 C5:4 B4:4 C5:4 A4:8',
+      bass: 'A2:8 E3:8 F2:8 E2:8 D2:8 E2:8 A2:16 A2:8 G2:8 F2:8 E2:8',
+    },
+  },
+  sea: {
+    bpm: 108,
+    loop: {
+      lead: 'D5:3 E5:1 F#5:2 A5:2 B5:4 A5:2 F#5:2 G5:3 F#5:1 E5:2 D5:2 E5:6 -:2 D5:3 E5:1 F#5:2 A5:2 D6:4 C#6:2 B5:2 A5:3 G5:1 F#5:2 E5:2 D5:6 -:2',
+      bass: 'D3:4 A3:4 G2:4 D3:4 E3:4 B2:4 A2:4 E3:4 D3:4 A3:4 G2:4 B2:4 A2:4 E3:4 D3:8',
+      drum: 'k:4 h:2 h:2 s:4 h:2 h:2 k:4 h:2 h:2 s:4 h:2 h:2 k:4 h:2 h:2 s:4 h:2 h:2 k:4 h:2 h:2 s:2 s:2 h:4',
+    },
+  },
+  snow: {
+    bpm: 96,
+    loop: {
+      lead: 'B5:2 F#5:2 D5:2 F#5:2 G5:4 F#5:2 E5:2 D5:2 E5:2 F#5:2 A5:2 F#5:6 -:2 B5:2 C#6:2 D6:2 B5:2 A5:4 G5:2 F#5:2 E5:2 F#5:2 G5:2 E5:2 D5:6 -:2',
+      bass: 'B2:4 F#3:4 G2:4 D3:4 E2:4 B2:4 F#2:4 C#3:4 B2:4 F#3:4 G2:4 D3:4 E2:4 A2:4 D3:4 F#2:4',
+    },
+  },
+  league: {
+    bpm: 138,
+    loop: {
+      lead: 'G4:2 B4:2 D5:2 G5:2 F#5:4 D5:4 E5:2 G5:2 B5:2 A5:2 G5:4 D5:4 C5:2 E5:2 G5:2 C6:2 B5:4 A5:4 G5:2 F#5:2 E5:2 F#5:2 G5:8',
+      bass: 'G2:4 D3:4 G2:4 D3:4 E2:4 B2:4 E2:4 B2:4 C3:4 G3:4 C3:4 G3:4 D3:4 A2:4 G2:8',
+      drum: 'k:2 h:2 s:2 h:2 k:2 h:2 s:2 k:2 k:2 h:2 s:2 h:2 k:2 h:2 s:2 h:2 k:2 h:2 s:2 h:2 k:2 h:2 s:2 k:2 k:2 h:2 s:2 h:2 k:2 s:2 s:2 s:2',
+    },
+  },
   victory: {
     bpm: 150,
     intro: {

@@ -247,8 +247,8 @@ export default function App() {
         <h1 id="intro-title">Wildkin: Ember Edition, a handheld-style monster-catching RPG in your browser</h1>
         <p>
           Wildkin is a free, original fan tribute to the classic pocket monster-catching adventures. It runs in any browser on a computer,
-          tablet or phone with no download. Explore the region of Varrow, catch 37 original creatures, earn three gym badges, stop the Hollow
-          Order and challenge the Champion. Every sprite, tile and chiptune is generated in code.
+          tablet or phone with no download. Explore the region of Varrow across eleven towns and twenty-five routes, catch 151 original creatures, earn
+          eight gym badges, stop the Hollow Order and climb to the Summit League. Every sprite, tile and chiptune is generated in code.
         </p>
         <nav className="linkrow" aria-label="Guide">
           <button type="button" className="link" onClick={() => setDialog('how')}>
@@ -271,7 +271,7 @@ export default function App() {
 
       <section id="wildex" className="info">
         <h2>Wildex: field guide</h2>
-        <p>All 37 Wildkin of Varrow. Some only appear in caves, on mountain trails or on Victory Path. One is a legend.</p>
+        <p>All 151 Wildkin of Varrow. Some only appear in caves, at sea, at the end of a fishing line or after a special shard. A few are legends.</p>
         <Roster />
       </section>
 
@@ -296,8 +296,16 @@ export default function App() {
           <p>Walk through tall grass or caves to meet wild Wildkin. Weaken them, then choose BAG and throw a Capture Pod. Sleep, paralysis and low HP make catching easier.</p>
         </details>
         <details>
+          <summary>How do I cross water, trim hedges or fly?</summary>
+          <p>
+            Key items do the job. The Hedge Shears trim hedges, the Driftboard lets you ride across water (face it and press A), the Rock Pick breaks
+            cracked boulders, the Fishing Rod hooks Wildkin from any water, and the Sky Whistle flies you to towns you have visited. Use the rod and
+            whistle from the Bag.
+          </p>
+        </details>
+        <details>
           <summary>How do types work?</summary>
-          <p>There are 12 types. Flame beats Leaf and Frost, Tide beats Flame and Stone, Leaf beats Tide and Stone, Volt beats Tide and Gale, Shade beats Mind, Spirit beats Shade, and more. Gym guides drop hints.</p>
+          <p>There are 15 types. Flame beats Leaf, Frost and Swarm. Tide beats Flame, Earth and Stone. Volt beats Tide and Gale but cannot touch Earth. Brawl smashes Beast, Stone and Frost. Swarm and Shade are the only answers to Mind, and only Wyrm or Frost truly hurt a Wyrm. Gym guides drop hints.</p>
         </details>
         <p className="disclaimer">Wildkin: Ember Edition is a free, non-commercial fan project with entirely original characters, creatures, art, music and story.</p>
       </section>

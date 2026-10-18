@@ -14,7 +14,7 @@ import { NamingScene } from './naming';
 import { Overworld } from './overworld';
 import { FadeScene } from './transition';
 
-const SHOWCASE = [1, 4, 7, 22, 18, 26, 13, 20, 37];
+const SHOWCASE = [1, 4, 7, 25, 133, 17, 94, 149, 146];
 
 export class TitleScene extends Scene {
   opaque = true;

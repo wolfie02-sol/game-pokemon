@@ -4,8 +4,34 @@ import type { Game } from '../core/game';
 import { box, cursor, rect, TYPE_COLORS, UI } from '../core/gfx';
 import { Modal } from '../core/scene';
 import { ALL_SPECIES, SPECIES_COUNT } from '../data/species';
-import { BADGES, flag, type GameState } from '../systems/state';
+import { BADGE_COLORS, BADGES, flag, type GameState } from '../systems/state';
 import { keyLabel } from '../core/input';
+import { allMaps } from '../world/maps';
+
+/** Where a species turns up in the wild (map names), for the Wildex. */
+let habitatCache: Map<number, string[]> | null = null;
+export function habitats(sp: number): string[] {
+  if (!habitatCache) {
+    habitatCache = new Map();
+    for (const m of Object.values(allMaps())) {
+      const tables: [string, typeof m.encounters][] = [
+        ['', m.encounters],
+        [' (surf)', m.surf],
+        [' (rod)', m.fish],
+      ];
+      for (const [tag, t] of tables) {
+        if (!t) continue;
+        for (const e of t.table) {
+          const list = habitatCache.get(e.sp) ?? [];
+          const name = m.name + tag;
+          if (!list.includes(name)) list.push(name);
+          habitatCache.set(e.sp, list);
+        }
+      }
+    }
+  }
+  return habitatCache.get(sp) ?? [];
+}
 
 // ---------------- WILDEX ----------------
 
@@ -74,7 +100,14 @@ export class DexScene extends Modal<void> {
         wrap(sp.dex, 24)
           .slice(0, 5)
           .forEach((l, k) => drawText(c, l, 8, 78 + k * 12));
-      else drawText(c, 'Catch it to learn more!', 8, 78, UI.muted);
+      else {
+        drawText(c, 'Catch it to learn more!', 8, 78, UI.muted);
+        const h = habitats(sp.id);
+        drawText(c, 'SEEN AROUND:', 8, 94, UI.accent);
+        wrap(h.length ? h.slice(0, 3).join(', ') : 'Unknown. Maybe a gift or a legend?', 24)
+          .slice(0, 3)
+          .forEach((l, k) => drawText(c, l, 8, 106 + k * 11));
+      }
       return;
     }
     // list
@@ -151,14 +184,28 @@ interface Quest {
 
 export function quests(s: GameState): Quest[] {
   const b = (n: string) => s.badges.includes(n);
+  const f = (k: string) => flag(s, k);
   const list: Quest[] = [
-    { title: "Get a partner from PROF. FENN's lab", short: 'Met my partner', done: flag(s, 'gotStarter') },
-    { title: 'Win the SPROUT BADGE in BRINDLE TOWN', short: 'SPROUT BADGE', done: b('SPROUT') },
-    { title: 'Cross WHISPER CAVE and stop the HOLLOW ORDER', short: 'Cleared WHISPER CAVE', done: flag(s, 'caveCleared') },
-    { title: 'Win the CINDER BADGE in CINDERMOOR CITY', short: 'CINDER BADGE', done: b('CINDER') },
-    { title: 'Recover the EMBER CORE from the HOLLOW SPIRE', short: 'Saved the EMBER CORE', done: flag(s, 'spireCleared') },
-    { title: 'Win the GALE BADGE in GALEWICK', short: 'GALE BADGE', done: b('GALE') },
-    { title: 'Climb VICTORY PATH and face the CHAMPION', short: 'Became CHAMPION', done: flag(s, 'champion') },
+    { title: "Get a partner from PROF. FENN's lab", short: 'Met my partner', done: f('gotStarter') },
+    { title: 'Win the BOULDER BADGE in BRINDLE TOWN', short: 'BOULDER BADGE', done: b('BOULDER') },
+    { title: 'Cross WHISPER CAVE and stop the HOLLOW ORDER', short: 'Cleared WHISPER CAVE', done: f('caveCleared') },
+    { title: 'Win the RIPPLE BADGE in RIVERTON CITY', short: 'RIPPLE BADGE', done: b('RIPPLE') },
+    { title: 'Visit LORNE across LANTERN BRIDGE', short: 'Got a FERRY TICKET', done: f('gotTicket') },
+    { title: 'Board the STARLIGHT FERRY at VOLTHAVEN PORT', short: 'Got the HEDGE SHEARS', done: f('gotShears') },
+    { title: 'Win the SPARK BADGE in VOLTHAVEN PORT', short: 'SPARK BADGE', done: b('SPARK') },
+    { title: 'Trim the hedge east of RIVERTON and reach BELLMOOR', short: 'Reached BELLMOOR', done: f('visit:bellmoor') },
+    { title: 'Take the UNDERPASS to BLOOMFIELD', short: 'Reached BLOOMFIELD', done: f('visit:bloomfield') },
+    { title: 'Win the BLOOM BADGE in BLOOMFIELD', short: 'BLOOM BADGE', done: b('BLOOM') },
+    { title: 'Raid the HOLLOW ORDER hideout under the ARCADE', short: 'Got the SPECTRAL LENS', done: f('hideoutCleared') },
+    { title: 'Rescue the ELDER at the top of the BELL TOWER', short: 'Saved the BELL TOWER', done: f('towerCleared') },
+    { title: 'Drive the HOLLOW ORDER out of the ASTRA OBSERVATORY', short: 'Freed the OBSERVATORY', done: f('observatoryCleared') },
+    { title: 'Win the MIND BADGE in ASTRA CITY', short: 'MIND BADGE', done: b('MIND') },
+    { title: 'Win the VENOM BADGE in MIRECOAST', short: 'VENOM BADGE', done: b('VENOM') },
+    { title: 'Find a way to cross the sea in the WILDLANDS PARK', short: 'Got the DRIFTBOARD', done: f('gotBoard') },
+    { title: 'Find the GYM key and win the CINDER BADGE on CINDERMOOR', short: 'CINDER BADGE', done: b('CINDER') },
+    { title: 'Win the FROST BADGE in GALEWICK, far north of ASTRA', short: 'FROST BADGE', done: b('FROST') },
+    { title: 'Climb VICTORY CAVE and conquer the SUMMIT LEAGUE', short: 'Became CHAMPION', done: f('champion') },
+    { title: 'Brave the RIFT beyond DRIFTWOOD CAPE', short: 'Calmed the RIFT', done: f('nullmindDone') },
   ];
   return list;
 }
@@ -186,7 +233,7 @@ export class JournalScene extends Modal<void> {
     const cur = qs.find((q) => !q.done);
     box(c, 0, 12, 160, 40);
     drawText(c, 'CURRENT GOAL', 8, 18, UI.accent);
-    wrap(cur ? cur.title : 'You are the CHAMPION! Complete the WILDEX!', 24)
+    wrap(cur ? cur.title : `CHAMPION! Complete the WILDEX: ${s.caught.length}/${SPECIES_COUNT}`, 24)
       .slice(0, 2)
       .forEach((l, k) => drawText(c, l, 8, 28 + k * 10));
     // completed list
@@ -203,10 +250,10 @@ export class JournalScene extends Modal<void> {
     drawText(c, 'BADGES', 8, 102);
     BADGES.forEach((bname, k) => {
       const has = s.badges.includes(bname);
-      const x = 56 + k * 32;
-      rect(c, x, 101, 10, 10, has ? ['#58b848', '#f07830', '#78c8f0'][k] : '#d8d0c0');
+      const x = 56 + k * 12;
+      rect(c, x, 101, 10, 10, has ? BADGE_COLORS[k] : '#d8d0c0');
       rect(c, x + 2, 103, 6, 6, has ? '#ffffff' : '#c4baa0');
-      if (has) rect(c, x + 3, 104, 4, 4, ['#58b848', '#f07830', '#78c8f0'][k]);
+      if (has) rect(c, x + 3, 104, 4, 4, BADGE_COLORS[k]);
     });
     const t = Math.floor(s.playTime);
     drawText(c, `TIME ${Math.floor(t / 3600)}:${padLeft(Math.floor((t % 3600) / 60), 2).replace(' ', '0')}`, 8, 116);

@@ -1,6 +1,6 @@
 import { DEFAULT_OPTIONS, type GameState, type Options } from './state';
 
-const SAVE_KEY = 'wildkin-ember-save-v1';
+const SAVE_KEY = 'wildkin-ember-save-v2';
 const OPT_KEY = 'wildkin-ember-options-v1';
 
 function storage(): Storage | null {
@@ -38,7 +38,7 @@ export function loadGame(): GameState | null {
     const raw = s.getItem(SAVE_KEY);
     if (!raw) return null;
     const st = JSON.parse(raw) as GameState;
-    if (st.version !== 1 || !Array.isArray(st.party) || typeof st.map !== 'string') return null;
+    if (st.version !== 2 || !Array.isArray(st.party) || typeof st.map !== 'string') return null;
     st.flags ??= {};
     st.bag ??= {};
     st.box ??= [];
@@ -81,20 +81,20 @@ export function saveOptions(o: Options) {
 /** Save as a portable text code (for moving progress between browsers/devices). */
 export function exportSave(state: GameState): string {
   const json = JSON.stringify({ ...state, savedAt: Date.now() });
-  return 'WKE1:' + btoa(unescape(encodeURIComponent(json)));
+  return 'WKE2:' + btoa(unescape(encodeURIComponent(json)));
 }
 
 /** Validate and store a save code. Returns an error message, or null on success. */
 export function importSave(code: string): string | null {
   const t = code.trim();
-  if (!t.startsWith('WKE1:')) return 'That is not a Wildkin save code (it should start with WKE1:).';
+  if (!t.startsWith('WKE2:')) return 'That is not a Wildkin save code (it should start with WKE2:).';
   let st: GameState;
   try {
     st = JSON.parse(decodeURIComponent(escape(atob(t.slice(5))))) as GameState;
   } catch {
     return 'The save code is damaged or incomplete. Copy the whole code and try again.';
   }
-  if (st.version !== 1 || !Array.isArray(st.party) || typeof st.map !== 'string' || typeof st.name !== 'string') {
+  if (st.version !== 2 || !Array.isArray(st.party) || typeof st.map !== 'string' || typeof st.name !== 'string') {
     return 'The save code is from an incompatible version.';
   }
   return saveGame(st) ? null : 'This browser is blocking storage, so the save could not be written.';

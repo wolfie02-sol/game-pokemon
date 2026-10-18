@@ -2,16 +2,26 @@ import { drawText, padLeft, wrap } from '../core/font';
 import type { Game } from '../core/game';
 import { box, cursor, rect, UI } from '../core/gfx';
 import { Modal } from '../core/scene';
-import { item, ITEMS } from '../data/items';
-import { addExp, evolutionFor, expFor, isAlive, maxHp, monName } from '../systems/mon';
+import { canLearnTM, item, ITEMS } from '../data/items';
+import { move as moveDef } from '../data/moves';
+import { species } from '../data/species';
+import { addExp, evolutionByItem, evolutionFor, expFor, isAlive, knowsMove, MAX_LEVEL, maxHp, monName, restorePP } from '../systems/mon';
 import { removeItem } from '../systems/state';
 import { say, yesNo } from './dialog';
 import { EvolutionScene, learnMoveDialog } from './evolution';
 import { PartyScene } from './party';
+import { getMap } from '../world/maps';
 
 export interface BagChoice {
   id: string;
   target?: number;
+}
+
+/** Field actions the bag can trigger in the overworld. */
+export interface FieldHooks {
+  escape?: () => Promise<void>;
+  fish?: () => Promise<void>;
+  fly?: () => Promise<void>;
 }
 
 const ORDER = Object.keys(ITEMS);
@@ -31,7 +41,7 @@ export class BagScene extends Modal<BagChoice | null> {
   constructor(
     g: Game,
     private mode: 'field' | 'battle',
-    private onEscape?: () => Promise<void>,
+    private hooks: FieldHooks = {},
   ) {
     super();
     this.g = g;
@@ -110,10 +120,14 @@ export class BagScene extends Modal<BagChoice | null> {
   private applicable(id: string, target: number): boolean {
     const def = item(id);
     const m = this.g.state!.party[target];
-    if (def.kind === 'heal') return isAlive(m) && m.hp < maxHp(m);
-    if (def.kind === 'cure') return isAlive(m) && !!m.status;
+    if (def.kind === 'heal') return isAlive(m) && (m.hp < maxHp(m) || (def.value >= 99999 && !!m.status));
+    if (def.kind === 'cure') return isAlive(m) && !!m.status && (!def.cures || def.cures.includes(m.status));
     if (def.kind === 'revive') return !isAlive(m);
-    if (def.kind === 'candy') return m.lvl < 60;
+    if (def.kind === 'candy') return m.lvl < MAX_LEVEL;
+    if (def.kind === 'pp') return m.moves.some((mv) => mv.pp < moveDef(mv.id).pp);
+    if (def.kind === 'evo') return evolutionByItem(m, id) !== null;
+    if (def.kind === 'tm') return canLearnTM(species(m.sp), def.move!) && !knowsMove(m, def.move!);
+    if (def.kind === 'xstat') return true;
     return false;
   }
 
@@ -141,28 +155,64 @@ export class BagScene extends Modal<BagChoice | null> {
     this.busy = true;
     try {
       if (def.kind === 'key') {
-        await say(g, id === 'embercore' ? 'The EMBER CORE glows warmly in your hands.' : "There's a time and place for everything.");
+        if (id === 'rod' && this.hooks.fish) {
+          this.finish(null);
+          await this.hooks.fish();
+          return;
+        }
+        if (id === 'skywhistle' && this.hooks.fly) {
+          this.finish(null);
+          await this.hooks.fly();
+          return;
+        }
+        if (id === 'rod' || id === 'skywhistle') await say(g, "You can't use that here.");
+        else await say(g, "There's a time and place for everything.");
+        return;
+      }
+      if (def.kind === 'xstat') {
+        await say(g, 'X items are used in battle to boost a stat.');
         return;
       }
       if (def.kind === 'pod') {
         await say(g, 'Pods are thrown in battle at wild Wildkin.');
         return;
       }
-      if (id === 'repel') {
+      if (id === 'repel' || id === 'superrepel' || id === 'maxrepel') {
         s.repel = def.value;
         removeItem(s, id);
         g.sfx('item');
-        await say(g, '{PLAYER} used the REPEL SPRAY. Weak wild Wildkin will stay away.');
+        await say(g, `{PLAYER} used the ${def.name.toUpperCase()}. Weak wild Wildkin will stay away.`);
         return;
       }
       if (id === 'escaperope') {
-        if (!this.onEscape) {
+        if (!this.hooks.escape) {
           await say(g, "Can't use that here.");
           return;
         }
         removeItem(s, id);
         this.finish(null);
-        await this.onEscape();
+        await this.hooks.escape();
+        return;
+      }
+      if (def.kind === 'tm') {
+        if (!s.party.length) return;
+        const mv = moveDef(def.move!);
+        await say(g, `It contains ${mv.name.toUpperCase()}. Teach it to a Wildkin?`);
+        const t = await g.open(new PartyScene(g, 'item'));
+        if (t < 0) return;
+        const pm = s.party[t];
+        if (knowsMove(pm, def.move!)) {
+          await say(g, `${monName(pm)} already knows ${mv.name.toUpperCase()}.`);
+          return;
+        }
+        if (!canLearnTM(species(pm.sp), def.move!)) {
+          await say(g, `${monName(pm)} can't learn ${mv.name.toUpperCase()}.`);
+          return;
+        }
+        const before = pm.moves.length;
+        const ids = pm.moves.map((m) => m.id).join();
+        await learnMoveDialog(g, pm, def.move!);
+        if (pm.moves.length !== before || pm.moves.map((m) => m.id).join() !== ids) removeItem(s, id);
         return;
       }
       if (!s.party.length) return;
@@ -177,8 +227,12 @@ export class BagScene extends Modal<BagChoice | null> {
       if (def.kind === 'heal') {
         const before = m.hp;
         m.hp = Math.min(maxHp(m), m.hp + def.value);
+        if (def.value >= 99999) {
+          m.status = null;
+          m.sleep = 0;
+        }
         g.sfx('heal');
-        await say(g, `${monName(m)} recovered ${m.hp - before} HP!`);
+        await say(g, m.hp > before ? `${monName(m)} recovered ${m.hp - before} HP!` : `${monName(m)} is healthy again!`);
       } else if (def.kind === 'cure') {
         m.status = null;
         m.sleep = 0;
@@ -188,6 +242,14 @@ export class BagScene extends Modal<BagChoice | null> {
         m.hp = Math.floor(maxHp(m) * def.value);
         g.sfx('heal');
         await say(g, `${monName(m)} was revived!`);
+      } else if (def.kind === 'pp') {
+        restorePP(m, def.value);
+        g.sfx('heal');
+        await say(g, `${monName(m)}'s PP was restored!`);
+      } else if (def.kind === 'evo') {
+        const to = evolutionByItem(m, id)!;
+        await g.open(new EvolutionScene(g, m, to, true));
+        g.music(getMap(s.map).music);
       } else if (def.kind === 'candy') {
         const evs = addExp(m, expFor(m.lvl + 1) - m.exp);
         g.sfx('levelup');
@@ -196,7 +258,10 @@ export class BagScene extends Modal<BagChoice | null> {
           for (const mv of ev.learn) await learnMoveDialog(g, m, mv);
         }
         const to = evolutionFor(m);
-        if (to) await g.open(new EvolutionScene(g, m, to));
+        if (to) {
+          await g.open(new EvolutionScene(g, m, to));
+          g.music(getMap(s.map).music);
+        }
       }
     } finally {
       this.clamp();

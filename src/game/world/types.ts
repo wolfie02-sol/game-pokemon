@@ -12,6 +12,9 @@ export interface Warp {
   dir?: Dir;
   /** if set, the warp fires when pushing this direction while standing on it */
   edge?: Dir;
+  /** locked doors: the warp only works while cond holds */
+  cond?: (s: GameState) => boolean;
+  locked?: string;
 }
 
 export interface NpcDef {
@@ -44,6 +47,9 @@ export interface GroundItem {
   y: number;
   item: string;
   n?: number;
+  /** hidden items sparkle only when you face them; fossils etc. run a script */
+  script?: Script;
+  cond?: (s: GameState) => boolean;
 }
 
 export interface Trigger {
@@ -85,6 +91,16 @@ export interface MapDef {
   onEnter?: Script;
   /** marks a HAVEN interior: whiting out returns here */
   havenSpot?: { x: number; y: number };
+  /** encounters while riding the driftboard */
+  surf?: EncounterTable;
+  /** encounters with the fishing rod */
+  fish?: EncounterTable;
+  /** towns can be flown to; this is where the player lands */
+  fly?: { x: number; y: number };
+  /** caves and buildings the escape rope works in */
+  escape?: boolean;
+  /** base ground used to tint terrain edges */
+  ground?: 'grass' | 'snow' | 'ash';
 }
 
 export interface NpcRuntime {
@@ -131,7 +147,10 @@ export interface ScriptCtx {
   music(name: string | null): void;
   shop(stock: string[]): Promise<void>;
   storage(): Promise<void>;
-  receiveMon(sp: number, lvl: number): Promise<void>;
+  receiveMon(sp: number, lvl: number, nick?: boolean): Promise<void>;
+  /** hide an NPC and remember it stays gone (e.g. a defeated blocker) */
+  gone(id: string): void;
+  money(n: number): void;
   badge(name: string): Promise<void>;
   flash(): Promise<void>;
 }

@@ -155,17 +155,24 @@ export class ChoiceScene extends Modal<number> {
   draw(c: CanvasRenderingContext2D) {
     const hasPrompt = this.lines.join('').length > 0;
     const top = hasPrompt ? drawTextBox(c, this.lines) : 144;
+    // long lists scroll inside a window that always fits above the text box
+    const maxRows = Math.max(2, Math.floor((top - 10) / 12));
+    const rows = Math.min(this.options.length, maxRows);
+    if (this.idx < this.scroll) this.scroll = this.idx;
+    if (this.idx >= this.scroll + rows) this.scroll = this.idx - rows + 1;
     const w = Math.max(...this.options.map((o) => o.length)) * 6 + 22;
-    const h = this.options.length * 12 + 10;
+    const h = rows * 12 + 10;
     const x = 160 - w;
     const y = top - h;
     box(c, x, y, w, h);
-    this.options.forEach((o, k) => {
-      drawText(c, o, x + 14, y + 6 + k * 12, UI.ink);
-      if (k === this.idx) cursor(c, x + 6, y + 6 + k * 12);
+    for (let r = 0; r < rows; r++) {
+      const k = r + this.scroll;
+      const o = this.options[k];
+      drawText(c, o, x + 14, y + 6 + r * 12, UI.ink);
+      if (k === this.idx) cursor(c, x + 6, y + 6 + r * 12);
       this.g.region(this, {
         x: x + 3,
-        y: y + 3 + k * 12,
+        y: y + 3 + r * 12,
         w: w - 6,
         h: 12,
         hover: () => {
@@ -176,8 +183,12 @@ export class ChoiceScene extends Modal<number> {
         },
         click: () => this.g.input.tap('a'),
       });
-    });
+    }
+    if (this.scroll > 0) drawText(c, '▲', x + w - 10, y + 2, UI.muted);
+    if (this.scroll + rows < this.options.length) drawText(c, '▼', x + w - 10, y + h - 9, UI.muted);
   }
+
+  scroll = 0;
 }
 
 export function say(g: Game, text: string | string[]): Promise<void> {

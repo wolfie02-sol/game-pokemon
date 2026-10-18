@@ -1,0 +1,15 @@
+import * as esbuild from '/opt/npm-tools/node_modules/esbuild/lib/main.js';
+import fs from 'node:fs';
+const { chromium } = await import('/opt/npm-tools/node_modules/playwright/index.mjs');
+const dir = '/tmp/claude-0/sheet';
+fs.mkdirSync(dir, { recursive: true });
+await esbuild.build({ entryPoints: ['tools/sheet.ts'], bundle: true, outfile: dir + '/sheet.js', format: 'iife', logLevel: 'warning' });
+fs.writeFileSync(dir + '/index.html', '<html><body style="margin:0"><script src="sheet.js"></script></body></html>');
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const page = await browser.newPage({ viewport: { width: 1300, height: 1000 } });
+page.on('pageerror', (e) => console.log('ERR', e.message));
+const [from, n, back, out] = process.argv.slice(2);
+await page.goto('file://' + dir + `/index.html?from=${from}&n=${n}&back=${back ?? 0}`);
+await page.waitForFunction(() => window.done);
+await page.locator('canvas').screenshot({ path: out });
+await browser.close();

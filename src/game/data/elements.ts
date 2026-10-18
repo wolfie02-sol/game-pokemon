@@ -1,3 +1,7 @@
+/**
+ * The fifteen Wildkin types. Names are original; the matchup web follows the
+ * classic handheld rules so every type has clear strengths and weaknesses.
+ */
 export type Element =
   | 'BEAST'
   | 'FLAME'
@@ -5,12 +9,15 @@ export type Element =
   | 'LEAF'
   | 'VOLT'
   | 'FROST'
-  | 'STONE'
-  | 'GALE'
+  | 'BRAWL'
   | 'TOXIN'
+  | 'EARTH'
+  | 'GALE'
   | 'MIND'
+  | 'SWARM'
+  | 'STONE'
   | 'SHADE'
-  | 'SPIRIT';
+  | 'WYRM';
 
 export const ELEMENTS: Element[] = [
   'BEAST',
@@ -19,32 +26,43 @@ export const ELEMENTS: Element[] = [
   'LEAF',
   'VOLT',
   'FROST',
-  'STONE',
-  'GALE',
+  'BRAWL',
   'TOXIN',
+  'EARTH',
+  'GALE',
   'MIND',
+  'SWARM',
+  'STONE',
   'SHADE',
-  'SPIRIT',
+  'WYRM',
 ];
 
 /** attacker -> defender -> multiplier (missing entries are 1x). */
-const CHART: Partial<Record<Element, Partial<Record<Element, number>>>> = {
+const CHART: Record<Element, Partial<Record<Element, number>>> = {
   BEAST: { STONE: 0.5, SHADE: 0 },
-  FLAME: { LEAF: 2, FROST: 2, FLAME: 0.5, TIDE: 0.5, STONE: 0.5 },
-  TIDE: { FLAME: 2, STONE: 2, TIDE: 0.5, LEAF: 0.5 },
-  LEAF: { TIDE: 2, STONE: 2, FLAME: 0.5, LEAF: 0.5, GALE: 0.5, TOXIN: 0.5 },
-  VOLT: { TIDE: 2, GALE: 2, LEAF: 0.5, VOLT: 0.5, STONE: 0 },
-  FROST: { LEAF: 2, GALE: 2, FLAME: 0.5, FROST: 0.5, TIDE: 0.5 },
-  STONE: { FLAME: 2, FROST: 2, GALE: 2, VOLT: 2, LEAF: 0.5 },
-  GALE: { LEAF: 2, STONE: 0.5, VOLT: 0.5 },
-  TOXIN: { LEAF: 2, SPIRIT: 2, TOXIN: 0.5, STONE: 0.5, SHADE: 0.5 },
-  MIND: { TOXIN: 2, MIND: 0.5, SHADE: 0 },
-  SHADE: { MIND: 2, SHADE: 2, SPIRIT: 0.5, BEAST: 0 },
-  SPIRIT: { SHADE: 2, TOXIN: 0.5, FLAME: 0.5 },
+  FLAME: { FLAME: 0.5, TIDE: 0.5, LEAF: 2, FROST: 2, SWARM: 2, STONE: 0.5, WYRM: 0.5 },
+  TIDE: { FLAME: 2, TIDE: 0.5, LEAF: 0.5, EARTH: 2, STONE: 2, WYRM: 0.5 },
+  LEAF: { FLAME: 0.5, TIDE: 2, LEAF: 0.5, TOXIN: 0.5, EARTH: 2, GALE: 0.5, SWARM: 0.5, STONE: 2, WYRM: 0.5 },
+  VOLT: { TIDE: 2, LEAF: 0.5, VOLT: 0.5, EARTH: 0, GALE: 2, WYRM: 0.5 },
+  FROST: { TIDE: 0.5, LEAF: 2, FROST: 0.5, EARTH: 2, GALE: 2, WYRM: 2 },
+  BRAWL: { BEAST: 2, FROST: 2, TOXIN: 0.5, GALE: 0.5, MIND: 0.5, SWARM: 0.5, STONE: 2, SHADE: 0 },
+  TOXIN: { LEAF: 2, TOXIN: 0.5, EARTH: 0.5, SWARM: 2, STONE: 0.5, SHADE: 0.5 },
+  EARTH: { FLAME: 2, LEAF: 0.5, VOLT: 2, TOXIN: 2, GALE: 0, SWARM: 0.5, STONE: 2 },
+  GALE: { LEAF: 2, VOLT: 0.5, BRAWL: 2, SWARM: 2, STONE: 0.5 },
+  MIND: { BRAWL: 2, TOXIN: 2, MIND: 0.5 },
+  SWARM: { FLAME: 0.5, LEAF: 2, BRAWL: 0.5, TOXIN: 2, GALE: 0.5, MIND: 2, SHADE: 0.5 },
+  STONE: { FLAME: 2, FROST: 2, BRAWL: 0.5, EARTH: 0.5, GALE: 2, SWARM: 2 },
+  SHADE: { BEAST: 0, MIND: 2, SHADE: 2 },
+  WYRM: { WYRM: 2 },
 };
 
 export function effectiveness(atk: Element, def: Element[]): number {
   let m = 1;
-  for (const d of def) m *= CHART[atk]?.[d] ?? 1;
+  for (const d of def) m *= CHART[atk][d] ?? 1;
   return m;
+}
+
+/** Plain-language matchup summary used by gym guides and the Wildex. */
+export function weaknesses(def: Element[]): Element[] {
+  return ELEMENTS.filter((a) => effectiveness(a, def) > 1);
 }

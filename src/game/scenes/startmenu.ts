@@ -4,12 +4,10 @@ import { box, cursor } from '../core/gfx';
 import { Modal } from '../core/scene';
 import { saveGame } from '../systems/save';
 import { BagScene } from './bag';
-import { say, yesNo } from './dialog';
+import { ask, say, yesNo } from './dialog';
 import { DexScene, JournalScene, OptionsScene, SaveCard } from './menus';
 import type { Overworld } from './overworld';
 import { PartyScene } from './party';
-
-const ESCAPABLE = ['cave', 'spire1', 'spire2'];
 
 export class StartMenu extends Modal<void> {
   idx = 0;
@@ -68,20 +66,36 @@ export class StartMenu extends Modal<void> {
       if (it === 'WILDEX') await g.open(new DexScene(g));
       else if (it === 'PARTY') await g.open(new PartyScene(g, 'field'));
       else if (it === 'BAG') {
-        const canEscape = ESCAPABLE.includes(this.ow.map.id);
+        const ow = this.ow;
+        const canEscape = !!ow.map.escape;
         await g.open(
-          new BagScene(
-            g,
-            'field',
-            canEscape
+          new BagScene(g, 'field', {
+            escape: canEscape
               ? async () => {
                   this.finish();
                   const s = g.state!;
                   await say(g, '{PLAYER} used the ESCAPE ROPE!');
-                  await this.ow.doWarp(s.heal.map, s.heal.x, s.heal.y, 'up');
+                  s.surfing = false;
+                  await ow.doWarp(s.heal.map, s.heal.x, s.heal.y, 'up');
                 }
               : undefined,
-          ),
+            fish: async () => {
+              this.finish();
+              await ow.fish();
+            },
+            fly: async () => {
+              if (!ow.map.outdoor) {
+                await say(g, "You can't fly from indoors! Head outside first.");
+                return;
+              }
+              const targets = ow.flyTargets();
+              const pick = await ask(g, 'Where do you want to fly?', [...targets.map((t) => t.name.slice(0, 16)), 'CANCEL'], targets.length);
+              if (pick >= targets.length) return;
+              this.finish();
+              await say(g, '{PLAYER} blew the SKY WHISTLE! A great bird swooped down!');
+              await ow.flyTo(targets[pick].id);
+            },
+          }),
         );
       } else if (it === 'JOURNAL') await g.open(new JournalScene(g));
       else if (it === 'OPTIONS') await g.open(new OptionsScene(g));

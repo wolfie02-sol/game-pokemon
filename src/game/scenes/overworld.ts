@@ -1,15 +1,18 @@
+import { creatureIcon } from '../art/creatures';
 import { charFrame, charSprites, exclaimSprite, itemBallSprite, LOOKS } from '../art/people';
-import { edgeFamily, edgeOverlay, joins, TILES, TS } from '../art/tiles';
+import { silhouette } from '../art/pixel';
+import { edgeFamily, edgeOverlay, joins, tileIdx, TILES, TS } from '../art/tiles';
 import { drawText } from '../core/font';
 import type { Game } from '../core/game';
 import { box, fadeOverlay, rect, UI } from '../core/gfx';
 import { DX, DY, OPP, type Dir } from '../core/input';
 import { Scene } from '../core/scene';
 import { item as itemDef } from '../data/items';
+import { speciesByName } from '../data/species';
 import { TRAINERS, trainerTeam } from '../data/trainers';
 import { healMon, isAlive, maxHp, monName } from '../systems/mon';
 import { addItem, anyAlive, markCaught, newMon, receiveMon, type GameState } from '../systems/state';
-import { getMap } from '../world/maps';
+import { allMaps, getMap } from '../world/maps';
 import type { MapDef, NpcRuntime, Script, ScriptCtx } from '../world/types';
 import { BattleScene, type BattleResult } from './battle';
 import { ask, say, yesNo } from './dialog';
@@ -18,6 +21,16 @@ import { ShopScene } from './shop';
 import { StartMenu } from './startmenu';
 import { StorageScene } from './storage';
 import { battleTransition } from './transition';
+
+/** NPC looks drawn as a creature instead of a person. */
+const MON_LOOKS: Record<string, string> = {
+  sleeper: 'Slumbear',
+  bird_volt: 'Voltwing',
+  bird_frost: 'Galecrest',
+  bird_flame: 'Solmara',
+  nullmind: 'Nullmind',
+  spirit: 'Duskwraith',
+};
 
 interface Waiter {
   t: number;
@@ -87,6 +100,9 @@ export class Overworld extends Scene {
     s.x = x;
     s.y = y;
     s.dir = dir;
+    this.loadCuts();
+    if (this.map.fly) s.flags['visit:' + id] = true;
+    if (s.surfing && !TILES[this.tileAt(x, y)].water) s.surfing = false;
     this.npcs = this.map.npcs.map((d) => ({
       def: d,
       x: d.x,
@@ -96,16 +112,49 @@ export class Overworld extends Scene {
       oy: 0,
       moving: null,
       timer: 60 + this.g.rng.int(120),
-      hidden: d.cond ? !d.cond(s) : false,
+      hidden: (d.cond ? !d.cond(s) : false) || !!s.flags['gone:' + id + ':' + d.id],
       homeX: d.x,
       homeY: d.y,
       emote: 0,
     }));
   }
 
+  /** cells trimmed or smashed on this map (remembered in the save) */
+  private cuts = new Map<number, number>();
+
+  private loadCuts() {
+    this.cuts.clear();
+    const pre = 'cut:' + this.map.id + ':';
+    for (const k of Object.keys(this.s.flags)) {
+      if (!k.startsWith(pre)) continue;
+      const [x, y] = k.slice(pre.length).split(',').map(Number);
+      this.cuts.set(y * this.map.w + x, this.clearedTile(x, y));
+    }
+  }
+
+  /** What a trimmed hedge or broken boulder leaves behind. */
+  private clearedTile(x: number, y: number): number {
+    const t = TILES[this.map.tiles[y * this.map.w + x]];
+    if (t.name === 'cavecrack') return tileIdx('cavefloor');
+    // copy the ground of a walkable neighbour so the cleared cell blends in
+    for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= this.map.w || ny >= this.map.h) continue;
+      const n = TILES[this.map.tiles[ny * this.map.w + nx]];
+      if (!n.solid && !n.ledge && !n.grass && !n.water && n.name !== 'door' && n.name !== 'glassdoor' && !n.name.startsWith('cave')) return n.idx;
+    }
+    return tileIdx('grass');
+  }
+
+  private clearCell(x: number, y: number) {
+    this.s.flags['cut:' + this.map.id + ':' + x + ',' + y] = true;
+    this.cuts.set(y * this.map.w + x, this.clearedTile(x, y));
+  }
+
   /** Re-evaluate NPC visibility conditions. */
   refresh() {
-    for (const n of this.npcs) if (n.def.cond) n.hidden = !n.def.cond(this.s);
+    for (const n of this.npcs) if (n.def.cond) n.hidden = !n.def.cond(this.s) || !!this.s.flags['gone:' + this.map.id + ':' + n.def.id];
   }
 
   showBanner() {
@@ -116,7 +165,10 @@ export class Overworld extends Scene {
 
   tileAt(x: number, y: number): number {
     const m = this.map;
-    if (x >= 0 && y >= 0 && x < m.w && y < m.h) return m.tiles[y * m.w + x];
+    if (x >= 0 && y >= 0 && x < m.w && y < m.h) {
+      const i = y * m.w + x;
+      return this.cuts.get(i) ?? m.tiles[i];
+    }
     const c = m.connections;
     if (c) {
       if (y < 0 && c.up && x >= 0 && x < m.w) {
@@ -161,13 +213,19 @@ export class Overworld extends Scene {
   }
 
   itemAt(x: number, y: number) {
-    return this.map.items.find((it) => it.x === x && it.y === y && !this.s.flags['item:' + it.id]);
+    return this.map.items.find((it) => it.x === x && it.y === y && !this.s.flags['item:' + it.id] && (!it.cond || it.cond(this.s)));
+  }
+
+  /** Can the player (or an NPC) stand on this tile type? */
+  private walkable(t: (typeof TILES)[number], forNpc = false): boolean {
+    if (t.water) return !forNpc && !!this.s.surfing;
+    return !t.solid;
   }
 
   blocked(x: number, y: number, forNpc = false): boolean {
     if (!this.inBounds(x, y)) return true;
     const t = TILES[this.tileAt(x, y)];
-    if (t.solid || t.ledge) return true;
+    if (!this.walkable(t, forNpc) || t.ledge) return true;
     if (this.npcAt(x, y)) return true;
     if (this.itemAt(x, y)) return true;
     if (forNpc && this.px === x && this.py === y) return true;
@@ -226,6 +284,17 @@ export class Overworld extends Scene {
       });
       return;
     }
+    if (this.clickTalk) {
+      const n = this.clickTalk;
+      this.clickTalk = null;
+      const d = this.reachDir(n);
+      if (d && !n.moving && !n.hidden) {
+        this.dir = d;
+        this.s.dir = d;
+        this.talkTo(n);
+        return;
+      }
+    }
     if (i.pressed('a')) {
       this.interact();
       return;
@@ -269,7 +338,7 @@ export class Overworld extends Scene {
         else if (d === 'left') [nx, ny] = [n.w - 1, ty + conn.offset];
         else [nx, ny] = [0, ty + conn.offset];
         const t = TILES[n.tiles[ny * n.w + nx]];
-        if (nx >= 0 && ny >= 0 && nx < n.w && ny < n.h && !t.solid) {
+        if (nx >= 0 && ny >= 0 && nx < n.w && ny < n.h && this.walkable(t)) {
           this.crossing = { map: conn.map, x: nx, y: ny };
           this.beginMove(d, true);
           return;
@@ -292,6 +361,7 @@ export class Overworld extends Scene {
       return;
     }
     s.dir = d;
+    if (s.surfing && !t.water) s.surfing = false;
     this.beginMove(d, true);
   }
 
@@ -353,6 +423,14 @@ export class Overworld extends Scene {
     // step warps
     const w = this.map.warps.find((w) => w.x === this.px && w.y === this.py && !w.edge);
     if (w) {
+      if (w.cond && !w.cond(s)) {
+        const back = OPP[this.dir];
+        void this.run(async (c) => {
+          await c.say(w.locked ?? 'It is locked.');
+          await c.walkPlayer([back]);
+        });
+        return;
+      }
       this.g.sfx('door');
       void this.run(async (c) => c.warp(w.to, w.tx, w.ty, w.dir ?? this.dir));
       return;
@@ -369,7 +447,7 @@ export class Overworld extends Scene {
     if (s.steps % 4 === 0) {
       let hurt = false;
       for (const m of s.party) {
-        if (m.status === 'PSN' && m.hp > 1) {
+        if ((m.status === 'PSN' || m.status === 'TOX') && m.hp > 1) {
           m.hp--;
           hurt = true;
         }
@@ -398,7 +476,8 @@ export class Overworld extends Scene {
           void this.run((c) => this.trainerApproach(c, n, k - 1));
           return true;
         }
-        if (!this.inBounds(cx, cy) || TILES[this.tileAt(cx, cy)].solid || this.npcAt(cx, cy) || this.itemAt(cx, cy)) break;
+        const st = TILES[this.tileAt(cx, cy)];
+        if (!this.inBounds(cx, cy) || (st.solid && !st.water) || this.npcAt(cx, cy) || this.itemAt(cx, cy)) break;
       }
     }
     return false;
@@ -421,10 +500,9 @@ export class Overworld extends Scene {
 
   private checkEncounter() {
     const s = this.s;
-    const enc = this.map.encounters;
-    if (!enc) return;
     const t = TILES[this.tileAt(this.px, this.py)];
-    if (!t.grass && !t.cave) return;
+    const enc = t.water && s.surfing ? this.map.surf : t.grass || t.cave ? this.map.encounters : undefined;
+    if (!enc) return;
     const rng = this.g.rng;
     if (!rng.chance(enc.rate)) return;
     const e = rng.weighted(enc.table);
@@ -437,6 +515,7 @@ export class Overworld extends Scene {
   }
 
   private interact() {
+    const s = this.s;
     const fx = this.px + DX[this.dir];
     const fy = this.py + DY[this.dir];
     let n = this.npcAt(fx, fy);
@@ -455,6 +534,11 @@ export class Overworld extends Scene {
       return;
     }
     const it = this.itemAt(fx, fy);
+    if (it && it.script) {
+      const sc = it.script;
+      void this.run(async (c) => sc(c));
+      return;
+    }
     if (it) {
       void this.run(async (c) => {
         c.set('item:' + it.id);
@@ -465,10 +549,97 @@ export class Overworld extends Scene {
       });
       return;
     }
-    if (this.inBounds(fx, fy) && TILES[this.tileAt(fx, fy)].water) {
-      void this.run(async (c) => c.say('The water is deep and clear. Wildkin ripple beneath the surface.'));
+    if (!this.inBounds(fx, fy)) return;
+    const ft = TILES[this.tileAt(fx, fy)];
+    if (ft.cut) {
+      void this.run(async (c) => {
+        if (!s.bag.shears) return c.say('A thick hedge blocks the way. It looks like it could be trimmed.');
+        if (!(await c.yesNo('This hedge could be trimmed. Use the HEDGE SHEARS?'))) return;
+        this.g.sfx('item');
+        this.clearCell(fx, fy);
+        await c.say('{PLAYER} trimmed the hedge!');
+      });
+      return;
+    }
+    if (ft.smash) {
+      void this.run(async (c) => {
+        if (!s.bag.pick) return c.say('A cracked boulder. A good tool could break it apart.');
+        if (!(await c.yesNo('This boulder is cracked. Use the ROCK PICK?'))) return;
+        this.g.sfx('hit');
+        this.shakeT = 10;
+        this.clearCell(fx, fy);
+        await c.say('{PLAYER} smashed the boulder!');
+      });
+      return;
+    }
+    if (ft.water && !s.surfing && !this.npcAt(fx, fy)) {
+      void this.run(async (c) => {
+        if (!s.bag.driftboard) return c.say('The water is deep and clear. Wildkin ripple beneath the surface.');
+        if (!(await c.yesNo('The water is calm. Ride the DRIFTBOARD?'))) return;
+        s.surfing = true;
+        await c.walkPlayer([this.dir]);
+      });
     }
   }
+
+  /** Cast the fishing rod at the water in front of the player. */
+  async fish(): Promise<void> {
+    const s = this.s;
+    const fx = this.px + DX[this.dir];
+    const fy = this.py + DY[this.dir];
+    await this.run(async (c) => {
+      if (!this.inBounds(fx, fy) || !TILES[this.tileAt(fx, fy)].water) {
+        await c.say('There is no water to fish in here. Face the water and try again.');
+        return;
+      }
+      await c.say('{PLAYER} cast the FISHING ROD...');
+      await c.wait(50);
+      const rng = this.g.rng;
+      const table = this.map.fish ?? { rate: 1, table: [{ sp: speciesByName('Mudgill'), min: 5, max: 15, w: 1 }] };
+      if (!rng.chance(0.7)) {
+        await c.say('Not even a nibble...');
+        return;
+      }
+      c.g.sfx('exclaim');
+      await c.emote('player');
+      await c.say('Oh! A bite!');
+      const e = rng.weighted(table.table);
+      await c.wild(e.sp, rng.range(e.min, e.max));
+    });
+    void s;
+  }
+
+  /** Towns the player can fly to. */
+  flyTargets(): { id: string; name: string; x: number; y: number }[] {
+    const maps = allMaps();
+    return Object.values(maps)
+      .filter((m) => m.fly && this.s.flags['visit:' + m.id])
+      .map((m) => ({ id: m.id, name: m.name, x: m.fly!.x, y: m.fly!.y }));
+  }
+
+  async flyTo(id: string) {
+    const m = getMap(id);
+    this.s.surfing = false;
+    await this.run(async (c) => {
+      c.g.sfx('run');
+      await c.warp(id, m.fly!.x, m.fly!.y, 'down');
+    });
+  }
+
+  private clickTalk: NpcRuntime | null = null;
+
+  /** Direction the player must face to talk to `n` (adjacent, or across a counter). */
+  private reachDir(n: NpcRuntime): Dir | null {
+    for (const d of ['up', 'down', 'left', 'right'] as Dir[]) {
+      const fx = this.px + DX[d];
+      const fy = this.py + DY[d];
+      if (n.x === fx && n.y === fy) return d;
+      if (n.x === fx + DX[d] && n.y === fy + DY[d] && this.inBounds(fx, fy) && TILES[this.tileAt(fx, fy)].counter) return d;
+    }
+    return null;
+  }
+
+  shakeT = 0;
 
   private talkTo(n: NpcRuntime) {
     const d = n.def;
@@ -585,6 +756,7 @@ export class Overworld extends Scene {
     s.money -= lost;
     await say(g, `{PLAYER} panicked and dropped $${lost}... {PLAYER} blacked out!`);
     for (const m of s.party) healMon(m);
+    s.surfing = false;
     this.fade = 1;
     this.fadeTarget = 1;
     this.load(s.heal.map, s.heal.x, s.heal.y, 'up');
@@ -735,6 +907,14 @@ export class Overworld extends Scene {
         ow.flashT = 12;
         await ow.wait(12);
       },
+      gone(id) {
+        const n = ow.npcs.find((v) => v.def.id === id);
+        if (n) n.hidden = true;
+        s.flags['gone:' + ow.map.id + ':' + id] = true;
+      },
+      money(n) {
+        s.money = Math.max(0, s.money + n);
+      },
     };
     return c;
   }
@@ -753,6 +933,7 @@ export class Overworld extends Scene {
 
   draw(c: CanvasRenderingContext2D) {
     const g = this.g;
+    if (this.shakeT > 0) this.shakeT--;
     const [ppx, ppy] = this.playerPixel();
     let camX = ppx - 64;
     let camY = ppy - 64;
@@ -762,7 +943,7 @@ export class Overworld extends Scene {
       if (mw <= 160) camX = (mw - 160) / 2;
       if (mh <= 144) camY = (mh - 144) / 2;
     }
-    camX = Math.round(camX);
+    camX = Math.round(camX) + (this.shakeT > 0 ? (this.shakeT % 4 < 2 ? 1 : -1) : 0);
     camY = Math.round(camY);
     const tx0 = Math.floor(camX / TS);
     const ty0 = Math.floor(camY / TS);
@@ -780,10 +961,10 @@ export class Overworld extends Scene {
         c.drawImage(fr, sx, sy);
         const fam = edgeFamily(def);
         if (fam) {
-          if (!joins(fam, TILES[this.tileAt(tx, ty - 1)])) c.drawImage(edgeOverlay(fam, 'up'), sx, sy);
-          if (!joins(fam, TILES[this.tileAt(tx, ty + 1)])) c.drawImage(edgeOverlay(fam, 'down'), sx, sy);
-          if (!joins(fam, TILES[this.tileAt(tx - 1, ty)])) c.drawImage(edgeOverlay(fam, 'left'), sx, sy);
-          if (!joins(fam, TILES[this.tileAt(tx + 1, ty)])) c.drawImage(edgeOverlay(fam, 'right'), sx, sy);
+          if (!joins(fam, TILES[this.tileAt(tx, ty - 1)])) c.drawImage(edgeOverlay(fam, 'up', this.map.ground), sx, sy);
+          if (!joins(fam, TILES[this.tileAt(tx, ty + 1)])) c.drawImage(edgeOverlay(fam, 'down', this.map.ground), sx, sy);
+          if (!joins(fam, TILES[this.tileAt(tx - 1, ty)])) c.drawImage(edgeOverlay(fam, 'left', this.map.ground), sx, sy);
+          if (!joins(fam, TILES[this.tileAt(tx + 1, ty)])) c.drawImage(edgeOverlay(fam, 'right', this.map.ground), sx, sy);
         }
       }
 
@@ -801,9 +982,23 @@ export class Overworld extends Scene {
       const look = LOOKS[n.def.look] ?? LOOKS.boy;
       const prog = Math.max(Math.abs(n.ox), Math.abs(n.oy));
       const phase = n.moving && prog >= 4 && prog < 12 ? 1 + ((n.x + n.y) % 2) : 0;
+      if (!n.moving && !this.moving && this.busy === 0 && this.fade === 0 && this.reachDir(n)) {
+        this.g.region(this, { x: sx, y: sy - 4, w: TS, h: TS + 4, click: () => (this.clickTalk = n) });
+      }
+      const monLook = MON_LOOKS[n.def.look];
       list.push({
         y: n.y * TS + n.oy,
         draw: () => {
+          if (monLook) {
+            let icon = creatureIcon(speciesByName(monLook));
+            if (n.def.look === 'spirit') icon = silhouette(icon, '#5a4a88');
+            const bob = Math.floor(g.frame / 24) % 2;
+            if (n.def.look === 'spirit') c.globalAlpha = 0.65 + 0.2 * Math.sin(g.frame / 15);
+            c.drawImage(icon, sx, sy - 2 - (n.def.look === 'sleeper' ? 0 : bob));
+            c.globalAlpha = 1;
+            if (n.emote > 0) c.drawImage(exclaimSprite(), sx, sy - 20);
+            return;
+          }
           c.drawImage(charFrame(charSprites(look), n.dir, phase), sx, sy - 4);
           this.grassOver(c, n.x + (n.moving && prog >= 8 ? DX[n.moving] : 0), n.y + (n.moving && prog >= 8 ? DY[n.moving] : 0), camX, camY);
           if (n.emote > 0) c.drawImage(exclaimSprite(), sx, sy - 20);
@@ -822,7 +1017,13 @@ export class Overworld extends Scene {
           rect(c, sx + 3, ppy - camY + 12, 10, 3, '#000');
           c.globalAlpha = 1;
         }
-        c.drawImage(charFrame(charSprites(LOOKS.player), this.dir, phase), sx, sy);
+        if (this.s.surfing) {
+          const bob = Math.floor(g.frame / 16) % 2;
+          rect(c, sx + 1, ppy - camY + 9 + bob, 14, 5, '#201a2e');
+          rect(c, sx + 2, ppy - camY + 10 + bob, 12, 3, '#f0b040');
+          rect(c, sx + 3, ppy - camY + 10 + bob, 10, 1, '#fff0b0');
+          c.drawImage(charFrame(charSprites(LOOKS.player), this.dir, 0), 0, 0, 16, 12, sx, sy + bob - 2, 16, 12);
+        } else c.drawImage(charFrame(charSprites(LOOKS.player), this.dir, phase), sx, sy);
         if (!this.jump) {
           const gx = this.moving && this.off >= 8 ? this.px + DX[this.moving] : this.px;
           const gy = this.moving && this.off >= 8 ? this.py + DY[this.moving] : this.py;

@@ -15,14 +15,16 @@ import {
   catchAttempt,
   calcDamage,
   chooseAiMove,
+  effStat,
   emptyStages,
+  fighter,
   goesFirst,
   hits,
   runChance,
   usableMoves,
   type Fighter,
 } from '../systems/battlecalc';
-import { addExp, evolutionFor, expFor, expReward, isAlive, maxHp, monName, stats, type Mon } from '../systems/mon';
+import { addExp, evolutionFor, expFor, expReward, isAlive, maxHp, monName, restorePP, stats, type Mon } from '../systems/mon';
 import { markCaught, markSeen, receiveMon, removeItem } from '../systems/state';
 import { drawMoreArrow, drawTextBox, fmt, TB_Y } from './dialog';
 import { EvolutionScene } from './evolution';
@@ -64,7 +66,8 @@ interface Fx {
   side: 0 | 1;
 }
 
-const STAT_NAME: Record<StatKey, string> = { atk: 'ATTACK', def: 'DEFENSE', spd: 'SPEED', spc: 'SPECIAL', acc: 'ACCURACY' };
+const STAT_NAME: Record<StatKey, string> = { atk: 'ATTACK', def: 'DEFENSE', spd: 'SPEED', spc: 'SPECIAL', acc: 'ACCURACY', eva: 'EVASION' };
+const STATUS_COL: Record<Status, string> = { PSN: '#a858c0', TOX: '#8030a8', BRN: '#e86030', PAR: '#d0a018', SLP: '#7878a0', FRZ: '#48a8d0' };
 
 export class BattleScene extends Modal<BattleResult> {
   opaque = true;
@@ -111,7 +114,7 @@ export class BattleScene extends Modal<BattleResult> {
   ) {
     super();
     this.g = g;
-    if (o.trainer?.smart) this.foePotions = o.trainer.cls === 'CHAMPION' ? 2 : 1;
+    if (o.trainer) this.foePotions = o.trainer.potions ?? (o.trainer.smart ? 1 : 0);
   }
 
   get s() {
@@ -121,13 +124,16 @@ export class BattleScene extends Modal<BattleResult> {
   enter() {
     const s = this.s;
     this.meIdx = s.party.findIndex(isAlive);
-    this.me = { mon: s.party[this.meIdx], stages: emptyStages(), flinch: false };
-    this.foe = { mon: this.o.party[0], stages: emptyStages(), flinch: false };
+    this.me = fighter(s.party[this.meIdx]);
+    this.foe = fighter(this.o.party[0]);
     this.disp = [this.foe.mon.hp, this.me.mon.hp];
     this.dispExp = this.me.mon.exp;
     this.g.music(this.o.music ?? (this.o.trainer?.music === 'boss' ? 'boss' : 'battle'));
     void this.main()
-      .then((r) => this.finish(r))
+      .then((r) => {
+        for (const m of this.s.party) if (m.status === 'TOX') m.status = 'PSN';
+        this.finish(r);
+      })
       .catch((e) => {
         console.error('Battle error', e);
         this.finish('run');
@@ -293,12 +299,13 @@ export class BattleScene extends Modal<BattleResult> {
       }
       await this.msg("Can't escape!");
     } else if (action.kind === 'switch') {
+      if (this.me.mon.status === 'TOX') this.me.mon.status = 'PSN';
       await this.info(`${monName(this.me.mon)}, come back!`);
       await this.anim(10, (p) => (this.meScale = 1 - p));
       this.meVis = false;
       this.hudMe = false;
       this.meIdx = action.idx;
-      this.me = { mon: s.party[action.idx], stages: emptyStages(), flinch: false };
+      this.me = fighter(s.party[action.idx]);
       await this.sendOutMe();
     } else if (action.kind === 'item') {
       const r = await this.useItem(action.c);
@@ -343,14 +350,53 @@ export class BattleScene extends Modal<BattleResult> {
     this.foe.flinch = false;
     // residual damage
     for (const f of [this.me, this.foe]) {
-      if (!isAlive(f.mon) || (f.mon.status !== 'BRN' && f.mon.status !== 'PSN')) continue;
-      const dmg = Math.max(1, Math.floor(maxHp(f.mon) / 8));
-      f.mon.hp = Math.max(0, f.mon.hp - dmg);
-      this.tint = { side: this.side(f), color: f.mon.status === 'BRN' ? '#f07830' : '#a858c0', t: 16 };
-      await this.animHp(this.side(f));
-      await this.info(`${this.name(f)} is hurt by ${f.mon.status === 'BRN' ? 'its burn' : 'poison'}!`);
-      const r = await this.checkFaints();
+      const r = await this.residual(f);
       if (r) return r;
+    }
+    return null;
+  }
+
+  /** End-of-turn damage: burn, poison, bad poison, seeds and binding. */
+  private async residual(f: Fighter): Promise<BattleResult | null> {
+    const other = f === this.me ? this.foe : this.me;
+    const hurt = async (dmg: number, text: string, color: string) => {
+      if (!isAlive(f.mon) || !isAlive(other.mon)) return null;
+      f.mon.hp = Math.max(0, f.mon.hp - Math.max(1, dmg));
+      this.tint = { side: this.side(f), color, t: 16 };
+      await this.animHp(this.side(f));
+      await this.info(text);
+      return this.checkFaints();
+    };
+    const max = maxHp(f.mon);
+    let r: BattleResult | null | undefined;
+    if (f.mon.status === 'BRN' || f.mon.status === 'PSN') {
+      r = await hurt(Math.floor(max / 8), `${this.name(f)} is hurt by ${f.mon.status === 'BRN' ? 'its burn' : 'poison'}!`, STATUS_COL[f.mon.status]);
+      if (r !== undefined && r !== null) return r;
+    } else if (f.mon.status === 'TOX') {
+      f.toxic = Math.min(15, (f.toxic ?? 0) + 1);
+      r = await hurt(Math.floor((max * f.toxic) / 16), `${this.name(f)} is hurt by poison!`, STATUS_COL.TOX);
+      if (r) return r;
+    }
+    if (f.seeded && isAlive(f.mon) && isAlive(other.mon)) {
+      const d = Math.max(1, Math.floor(max / 8));
+      const taken = Math.min(d, f.mon.hp);
+      r = await hurt(d, `The seed drains ${this.name(f)}'s health!`, '#58b848');
+      if (r) return r;
+      if (isAlive(other.mon)) {
+        other.mon.hp = Math.min(maxHp(other.mon), other.mon.hp + taken);
+        await this.animHp(this.side(other));
+      }
+    }
+    if (f.trap && f.trap > 0 && isAlive(f.mon)) {
+      f.trap--;
+      r = await hurt(Math.floor(max / 16), f.trap > 0 ? `${this.name(f)} is squeezed by the bind!` : `${this.name(f)} broke free of the bind!`, '#c09050');
+      if (r) return r;
+    }
+    for (const k of ['reflect', 'light'] as const) {
+      if (f[k]) {
+        f[k]!--;
+        if (f[k] === 0 && isAlive(f.mon)) await this.info(`${this.name(f)}'s ${k === 'reflect' ? 'guard' : 'veil'} wore off.`);
+      }
     }
     return null;
   }
@@ -364,9 +410,10 @@ export class BattleScene extends Modal<BattleResult> {
   private async foePotion() {
     this.foePotions--;
     const f = this.foe.mon;
-    f.hp = Math.min(maxHp(f), f.hp + 60);
+    const big = f.lvl >= 40;
+    f.hp = Math.min(maxHp(f), f.hp + (big ? 200 : 60));
     this.g.sfx('heal');
-    await this.info(`${this.trainerName()} used a SUPER POTION!`);
+    await this.info(`${this.trainerName()} used a ${big ? 'HYPER' : 'SUPER'} POTION!`);
     await this.animHp(0);
   }
 
@@ -397,7 +444,7 @@ export class BattleScene extends Modal<BattleResult> {
       const next = this.o.party.findIndex(isAlive);
       if (next >= 0) {
         this.foeIdx = next;
-        this.foe = { mon: this.o.party[next], stages: emptyStages(), flinch: false };
+        this.foe = fighter(this.o.party[next]);
         this.participants = new Set(isAlive(this.me.mon) ? [this.me.mon.uid] : []);
         this.foeDy = 0;
         await this.sendOutFoe();
@@ -421,7 +468,7 @@ export class BattleScene extends Modal<BattleResult> {
     }
     const idx = await this.g.open(new PartyScene(this.g, 'forced', this.meIdx));
     this.meIdx = idx;
-    this.me = { mon: s.party[idx], stages: emptyStages(), flinch: false };
+    this.me = fighter(s.party[idx]);
     this.meDy = 0;
     await this.sendOutMe();
     return null;
@@ -555,21 +602,35 @@ export class BattleScene extends Modal<BattleResult> {
     const target = s.party[c.target ?? 0];
     removeItem(s, c.id);
     await this.info(`{PLAYER} used ${def.name.toUpperCase()}.`);
+    if (def.kind === 'xstat') {
+      await this.applyStat(this.me, def.stat!, 1);
+      return null;
+    }
     if (def.kind === 'heal') {
       const before = target.hp;
       target.hp = Math.min(maxHp(target), target.hp + def.value);
+      if (def.value >= 99999) {
+        target.status = null;
+        target.sleep = 0;
+        if (target === this.me.mon) this.me.conf = 0;
+      }
       this.g.sfx('heal');
       if (target === this.me.mon) await this.animHp(1);
       await this.msg(`${monName(target)} recovered ${target.hp - before} HP!`);
     } else if (def.kind === 'cure') {
       target.status = null;
       target.sleep = 0;
+      if (target === this.me.mon) this.me.toxic = 0;
       this.g.sfx('heal');
       await this.msg(`${monName(target)} is cured of its status problem!`);
     } else if (def.kind === 'revive') {
-      target.hp = Math.floor(maxHp(target) * def.value);
+      target.hp = Math.max(1, Math.floor(maxHp(target) * def.value));
       this.g.sfx('heal');
       await this.msg(`${monName(target)} was revived!`);
+    } else if (def.kind === 'pp') {
+      restorePP(target, def.value);
+      this.g.sfx('heal');
+      await this.msg(`${monName(target)}'s PP was restored!`);
     }
     return null;
   }
@@ -631,6 +692,11 @@ export class BattleScene extends Modal<BattleResult> {
     const rng = this.g.rng;
     const an = this.name(a);
     const am = a.mon;
+    if (a.recharge) {
+      a.recharge = false;
+      await this.info(`${an} must recharge!`);
+      return;
+    }
     if (am.status === 'SLP') {
       am.sleep--;
       if (am.sleep <= 0) {
@@ -650,57 +716,107 @@ export class BattleScene extends Modal<BattleResult> {
         return;
       }
     }
-    if (am.status === 'PAR' && rng.chance(0.25)) {
-      await this.info(`${an} is fully paralyzed!`);
-      return;
-    }
     if (a.flinch) {
       a.flinch = false;
       await this.info(`${an} flinched!`);
       return;
     }
+    if (a.conf) {
+      a.conf--;
+      if (a.conf <= 0) {
+        a.conf = 0;
+        await this.info(`${an} snapped out of its confusion!`);
+      } else {
+        await this.info(`${an} is confused!`);
+        if (rng.chance(0.5)) {
+          const raw = Math.floor(Math.floor((Math.floor((2 * am.lvl) / 5 + 2) * 40 * effStat(a, 'atk')) / effStat(a, 'def')) / 50) + 2;
+          const dmg = Math.min(am.hp, Math.max(1, raw));
+          am.hp -= dmg;
+          this.shake = 8;
+          this.g.sfx('hit');
+          await this.animHp(this.side(a));
+          await this.info('It hurt itself in its confusion!');
+          return;
+        }
+      }
+    }
+    if (am.status === 'PAR' && rng.chance(0.25)) {
+      await this.info(`${an} is fully paralyzed!`);
+      return;
+    }
     if (slot >= 0) am.moves[slot].pp = Math.max(0, am.moves[slot].pp - 1);
     await this.msg(`${an} used ${mv.name.toUpperCase()}!`, 30);
 
-    const selfTarget = mv.cat === 'status' && (mv.heal || mv.stat?.who === 'self');
+    const selfTarget = mv.cat === 'status' && (mv.heal || mv.rest || mv.screen || mv.haze || (mv.stat?.who === 'self' && !mv.status && !mv.conf && !mv.seed));
     if (!selfTarget && !hits(rng, a, d, mv)) {
       await this.info(`${an}'s attack missed!`);
+      if (mv.explode) {
+        am.hp = 0;
+        await this.animHp(this.side(a));
+      }
       return;
     }
     const dn = this.name(d);
     if (mv.cat !== 'status') {
-      const r = calcDamage(rng, a, d, mv);
-      if (r.eff === 0) {
-        await this.info(`It doesn't affect ${dn}...`);
-        return;
+      const n = mv.multi ? rng.range(mv.multi[0], mv.multi[1]) : 1;
+      let total = 0;
+      let hitsDone = 0;
+      let lastEff = 1;
+      for (let k = 0; k < n && isAlive(d.mon); k++) {
+        const r = calcDamage(rng, a, d, mv);
+        lastEff = r.eff;
+        if (r.eff === 0) {
+          await this.info(`It doesn't affect ${dn}...`);
+          if (mv.explode) {
+            am.hp = 0;
+            await this.animHp(this.side(a));
+          }
+          return;
+        }
+        await this.attackAnim(a, d, mv, r.eff);
+        const dmg = Math.min(r.damage, d.mon.hp);
+        d.mon.hp -= dmg;
+        total += dmg;
+        hitsDone++;
+        await this.animHp(this.side(d));
+        if (r.crit) await this.info('A critical hit!');
       }
-      await this.attackAnim(a, d, mv, r.eff);
-      const dmg = Math.min(r.damage, d.mon.hp);
-      d.mon.hp -= dmg;
-      await this.animHp(this.side(d));
-      if (r.crit) await this.info('A critical hit!');
-      if (r.eff > 1) await this.info("It's super effective!");
-      else if (r.eff < 1) await this.info("It's not very effective...");
+      if (!mv.fixed) {
+        if (lastEff > 1) await this.info("It's super effective!");
+        else if (lastEff < 1) await this.info("It's not very effective...");
+      }
+      if (n > 1) await this.info(`Hit ${hitsDone} time${hitsDone === 1 ? '' : 's'}!`);
       if (mv.drain && isAlive(am)) {
-        const h = Math.max(1, Math.floor(dmg * mv.drain));
+        const h = Math.max(1, Math.floor(total * mv.drain));
         am.hp = Math.min(maxHp(am), am.hp + h);
         await this.animHp(this.side(a));
         await this.info(`${dn} had its energy drained!`);
       }
       if (mv.recoil) {
-        am.hp = Math.max(0, am.hp - Math.max(1, Math.floor(dmg * mv.recoil)));
+        am.hp = Math.max(0, am.hp - Math.max(1, Math.floor(total * mv.recoil)));
         await this.animHp(this.side(a));
         await this.info(`${an} is hit with recoil!`);
       }
+      if (mv.explode) {
+        am.hp = 0;
+        await this.animHp(this.side(a));
+      }
+      if (mv.recharge && isAlive(d.mon)) a.recharge = true;
       if (isAlive(d.mon)) {
         if (mv.status && rng.chance(mv.status.chance)) await this.inflict(d, mv.status.s, true);
         if (mv.stat && rng.chance(mv.stat.chance)) await this.applyStat(mv.stat.who === 'self' ? a : d, mv.stat.key, mv.stat.delta);
+        if (mv.conf && !d.conf && rng.chance(mv.conf)) await this.confuse(d);
+        if (mv.trap && !d.trap) {
+          d.trap = rng.range(2, 5);
+          await this.info(`${dn} was trapped!`);
+        }
         if (mv.flinch && first && rng.chance(mv.flinch)) d.flinch = true;
       }
       return;
     }
     // status moves
-    await this.statusAnim(mv.stat?.who === 'self' || mv.heal ? a : d, mv.type);
+    const target = selfTarget ? a : d;
+    await this.statusAnim(target, mv.type);
     if (mv.heal) {
       if (am.hp >= maxHp(am)) {
         await this.info('But it failed!');
@@ -711,18 +827,70 @@ export class BattleScene extends Modal<BattleResult> {
       await this.animHp(this.side(a));
       await this.info(`${an} regained health!`);
     }
+    if (mv.rest) {
+      if (am.hp >= maxHp(am)) {
+        await this.info('But it failed!');
+        return;
+      }
+      am.hp = maxHp(am);
+      am.status = 'SLP';
+      am.sleep = 3;
+      a.toxic = 0;
+      this.g.sfx('heal');
+      await this.animHp(this.side(a));
+      await this.info(`${an} fell asleep and became healthy!`);
+      return;
+    }
+    if (mv.screen) {
+      if (a[mv.screen]) {
+        await this.info('But it failed!');
+        return;
+      }
+      a[mv.screen] = 5;
+      await this.info(mv.screen === 'reflect' ? `${an} is guarded against physical moves!` : `${an} is guarded against SPECIAL moves!`);
+      return;
+    }
+    if (mv.haze) {
+      this.me.stages = emptyStages();
+      this.foe.stages = emptyStages();
+      this.me.conf = 0;
+      this.foe.conf = 0;
+      await this.info('All stat changes were eliminated!');
+      return;
+    }
+    if (mv.seed) {
+      if (d.seeded || species(d.mon.sp).types.includes('LEAF')) {
+        await this.info(`${dn} evaded the seed!`);
+        return;
+      }
+      d.seeded = true;
+      await this.info(`${dn} was seeded!`);
+      return;
+    }
+    if (mv.conf) {
+      if (d.conf) await this.info(`${dn} is already confused!`);
+      else await this.confuse(d);
+      return;
+    }
     if (mv.status) {
       const ok = await this.inflict(d, mv.status.s, false);
       if (!ok) await this.info('But it failed!');
     }
     if (mv.stat) await this.applyStat(mv.stat.who === 'self' ? a : d, mv.stat.key, mv.stat.delta);
+    if (mv.stat2) await this.applyStat(mv.stat2.who === 'self' ? a : d, mv.stat2.key, mv.stat2.delta);
+  }
+
+  private async confuse(f: Fighter) {
+    f.conf = this.g.rng.range(2, 5);
+    this.tint = { side: this.side(f), color: '#f060a0', t: 20 };
+    await this.msg(`${this.name(f)} became confused!`);
   }
 
   private async inflict(f: Fighter, st: Status, silent: boolean): Promise<boolean> {
     const types = species(f.mon.sp).types;
     const immune =
       (st === 'BRN' && types.includes('FLAME')) ||
-      (st === 'PSN' && types.includes('TOXIN')) ||
+      ((st === 'PSN' || st === 'TOX') && types.includes('TOXIN')) ||
       (st === 'FRZ' && types.includes('FROST')) ||
       (st === 'PAR' && types.includes('VOLT'));
     if (f.mon.status || immune || !isAlive(f.mon)) {
@@ -734,10 +902,11 @@ export class BattleScene extends Modal<BattleResult> {
     }
     f.mon.status = st;
     if (st === 'SLP') f.mon.sleep = this.g.rng.range(1, 3) + 1;
-    const col: Record<Status, string> = { PSN: '#a858c0', BRN: '#f07830', PAR: '#f0c828', SLP: '#8888a8', FRZ: '#78d0e8' };
-    this.tint = { side: this.side(f), color: col[st], t: 20 };
+    if (st === 'TOX') f.toxic = 0;
+    this.tint = { side: this.side(f), color: STATUS_COL[st], t: 20 };
     const txt: Record<Status, string> = {
       PSN: 'was poisoned!',
+      TOX: 'was badly poisoned!',
       BRN: 'was burned!',
       PAR: 'is paralyzed! It may be unable to move!',
       SLP: 'fell asleep!',
@@ -1103,8 +1272,7 @@ export class BattleScene extends Modal<BattleResult> {
   }
 
   private statusTag(c: CanvasRenderingContext2D, x: number, y: number, st: Status) {
-    const col: Record<Status, string> = { PSN: '#a858c0', BRN: '#e86030', PAR: '#d0a018', SLP: '#7878a0', FRZ: '#48a8d0' };
-    rect(c, x - 1, y - 1, 20, 9, col[st]);
+    rect(c, x - 1, y - 1, 20, 9, STATUS_COL[st]);
     drawText(c, st, x, y, '#ffffff');
   }
 
@@ -1206,15 +1374,38 @@ export class BattleScene extends Modal<BattleResult> {
           dot(cx + Math.cos(a) * (6 + k * 1.6), cy + Math.sin(a) * (4 + k), 2, '#ffffff');
         }
         break;
-      case 'MIND':
-      case 'SPIRIT': {
+      case 'MIND': {
         const r = 4 + p * 22;
         for (let k = 0; k < 16; k++) {
           const a = (k / 16) * Math.PI * 2;
-          dot(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.8, 2, fx.type === 'MIND' ? '#f060a0' : k % 2 ? '#ffffff' : '#f0a0d0');
+          dot(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.8, 2, k % 2 ? '#f060a0' : '#f8b0d8');
         }
         break;
       }
+      case 'BRAWL':
+        for (let k = 0; k < 3; k++) {
+          const s = Math.max(0, 10 - Math.abs(t - k * 6) * 2);
+          if (s > 0) {
+            rect(c, cx - 14 + k * 12 - s / 2, cy - 8 + (k % 2) * 10 - s / 2, s, s, '#ffffff');
+            rect(c, cx - 14 + k * 12 - s / 4, cy - 8 + (k % 2) * 10 - s / 4, s / 2, s / 2, '#e05848');
+          }
+        }
+        break;
+      case 'EARTH':
+        for (let k = 0; k < 8; k++) dot(cx - 20 + k * 6, cy + 14 - Math.abs(Math.sin(t / 2 + k)) * (6 + p * 8), 4, k % 2 ? '#d0a850' : '#a07838');
+        break;
+      case 'SWARM':
+        for (let k = 0; k < 7; k++) {
+          const a = t / 3 + k * 0.9;
+          dot(cx + Math.cos(a) * (8 + k * 2), cy + Math.sin(a * 1.3) * (6 + k), 2, k % 2 ? '#98b828' : '#e8f070');
+        }
+        break;
+      case 'WYRM':
+        for (let k = 0; k < 10; k++) {
+          const a = p * 6 + k * 0.6;
+          dot(cx + Math.cos(a) * (20 - k * 1.5), cy + Math.sin(a) * (12 - k), 3, k % 3 ? '#7058e8' : '#f0c040');
+        }
+        break;
       case 'SHADE':
         c.globalAlpha = 0.3;
         rect(c, 0, 0, 160, 96, '#302048');

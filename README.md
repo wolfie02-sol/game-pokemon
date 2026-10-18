@@ -46,15 +46,16 @@ All text boxes use one sentence-aware paginator (`src/game/core/paginate.ts`): a
 ## What's in the game
 
 - Title screen, professor intro, player and rival naming.
-- 29 maps: 4 towns, 5 routes, a cave, a two-floor villain tower, 3 gyms, HAVENs (healing), MARKETs (shops), houses, a museum, a lab and Summit Hall.
-- Seamless edge connections between outdoor maps, door and mat warps, ledges, tall grass with sway overlay, running, NPC wandering, signs, item pickups.
-- 37 original Wildkin across 12 types, with evolutions, level-up learnsets and a legendary encounter.
-- Turn-based battles: physical/special/status moves, STAB, type chart, crits, accuracy, priority, stat stages, burn/poison/paralysis/sleep/freeze, flinch, drain, recoil, switching, items, running, trainer AI (smart trainers also use potions), experience sharing, level-up stat screen, move learning, post-battle evolution with cancel.
-- Catching with three pod grades and a shake-based catch formula, nicknames, 6-member party plus LINK TERMINAL storage (withdraw, deposit, release).
-- 30+ trainers with line-of-sight challenges, 3 gym leaders, the Hollow Order story arc, three rival battles, the Champion, credits and post-game.
-- START menu: Wildex (seen/caught with dex entries), Party (summary, reorder), Bag (use/toss), Journal (current goal, badges, time), Save, Options (text speed, music, sound, battle animations).
-- Save/continue via localStorage; whiteout returns you to the last HAVEN.
-- WebAudio chiptune soundtrack (11 tracks) and synthesized sound effects, with a mute button.
+- The region of Varrow: 11 settlements, 25 routes and 121 maps in all, including Thicket Woods, Whisper Cave, Burrow Tunnel, Gloom Tunnel, the Stormworks power plant, the Bell Tower, the Astra Observatory, the arcade hideout, the Wildlands Park, the Frostdeep Isles, a burnt manor, the Ember Caldera, Victory Cave and the post-game Rift.
+- 151 original Wildkin across 15 types (Beast, Flame, Tide, Leaf, Volt, Frost, Brawl, Toxin, Earth, Gale, Mind, Swarm, Stone, Shade, Wyrm) with a full matchup chart, level and shard evolutions (one Wildkin branches three ways), and every species obtainable in a single save.
+- 165 moves: physical or special by type, STAB, crits, accuracy and evasion, priority, stat stages, burn, poison, bad poison, paralysis, sleep and freeze, confusion, flinching, multi-hit moves, fixed damage, draining seeds, binding, screens, haze, rest, recoil, recharge and self-destructing moves.
+- 8 gyms (Stone, Tide, Volt, Leaf, Toxin, Mind, Flame, Frost), the Elite Four and the Champion, seven rival battles and the Hollow Order story arc, plus about 175 trainers in total.
+- Field items that open the world: Hedge Shears (trim hedges), Driftboard (ride across water), Rock Pick (break cracked boulders), Fishing Rod, Sky Whistle (fly to visited towns), Spectral Lens and Dawn Chime.
+- 30 TMs, evolution shards, fossil revival, gift Wildkin and three legendary birds.
+- Catching with four pod grades and a shake-based catch formula, nicknames, a 6-member party plus LINK TERMINAL storage.
+- START menu: Wildex (seen/caught, dex entries and where to find unseen Wildkin), Party, Bag, Journal (current goal, all eight badges), Save, Options.
+- Save/continue via localStorage, save codes for moving between devices.
+- WebAudio chiptune soundtrack (16 tracks) and synthesized sound effects, with a mute button.
 
 ## Project layout
 
