@@ -1,0 +1,863 @@
+import { charFrame, charSprites, exclaimSprite, itemBallSprite, LOOKS } from '../art/people';
+import { edgeFamily, edgeOverlay, joins, TILES, TS } from '../art/tiles';
+import { drawText } from '../core/font';
+import type { Game } from '../core/game';
+import { box, fadeOverlay, rect, UI } from '../core/gfx';
+import { DX, DY, OPP, type Dir } from '../core/input';
+import { Scene } from '../core/scene';
+import { item as itemDef } from '../data/items';
+import { TRAINERS, trainerTeam } from '../data/trainers';
+import { healMon, isAlive, maxHp, monName } from '../systems/mon';
+import { addItem, anyAlive, markCaught, newMon, receiveMon, type GameState } from '../systems/state';
+import { getMap } from '../world/maps';
+import type { MapDef, NpcRuntime, Script, ScriptCtx } from '../world/types';
+import { BattleScene, type BattleResult } from './battle';
+import { ask, say, yesNo } from './dialog';
+import { NamingScene } from './naming';
+import { ShopScene } from './shop';
+import { StartMenu } from './startmenu';
+import { StorageScene } from './storage';
+import { battleTransition } from './transition';
+
+interface Waiter {
+  t: number;
+  res: () => void;
+}
+
+export class Overworld extends Scene {
+  opaque = true;
+  map!: MapDef;
+  npcs: NpcRuntime[] = [];
+  // player
+  px = 0;
+  py = 0;
+  dir: Dir = 'down';
+  moving: Dir | null = null;
+  off = 0;
+  stepParity = 0;
+  jump = 0;
+  turnGrace = 0;
+  bumpCd = 0;
+  crossing: { map: string; x: number; y: number } | null = null;
+  playerPath: Dir[] = [];
+  playerPathRes: (() => void) | null = null;
+  playerEmote = 0;
+  // runtime
+  busy = 0;
+  fade = 0;
+  private fadeTarget = 0;
+  private fadeRes: (() => void) | null = null;
+  private waiters: Waiter[] = [];
+  private npcPaths = new Map<NpcRuntime, { path: Dir[]; speed: number; res: () => void }>();
+  banner: { text: string; t: number } | null = null;
+  flashT = 0;
+
+  constructor(g: Game) {
+    super();
+    this.g = g;
+    const s = g.state!;
+    this.load(s.map, s.x, s.y, s.dir);
+  }
+
+  get s(): GameState {
+    return this.g.state!;
+  }
+
+  enter() {
+    this.g.music(this.map.music);
+    this.showBanner();
+    if (this.map.onEnter) void this.run(this.map.onEnter);
+  }
+
+  // ---------- map loading ----------
+
+  load(id: string, x: number, y: number, dir: Dir) {
+    this.map = getMap(id);
+    this.px = x;
+    this.py = y;
+    this.dir = dir;
+    this.moving = null;
+    this.off = 0;
+    this.jump = 0;
+    this.crossing = null;
+    this.turnGrace = 0;
+    this.bumpCd = 0;
+    const s = this.s;
+    s.map = id;
+    s.x = x;
+    s.y = y;
+    s.dir = dir;
+    this.npcs = this.map.npcs.map((d) => ({
+      def: d,
+      x: d.x,
+      y: d.y,
+      dir: d.dir,
+      ox: 0,
+      oy: 0,
+      moving: null,
+      timer: 60 + this.g.rng.int(120),
+      hidden: d.cond ? !d.cond(s) : false,
+      homeX: d.x,
+      homeY: d.y,
+      emote: 0,
+    }));
+  }
+
+  /** Re-evaluate NPC visibility conditions. */
+  refresh() {
+    for (const n of this.npcs) if (n.def.cond) n.hidden = !n.def.cond(this.s);
+  }
+
+  showBanner() {
+    if (this.map.outdoor) this.banner = { text: this.map.name, t: 110 };
+  }
+
+  // ---------- tile queries ----------
+
+  tileAt(x: number, y: number): number {
+    const m = this.map;
+    if (x >= 0 && y >= 0 && x < m.w && y < m.h) return m.tiles[y * m.w + x];
+    const c = m.connections;
+    if (c) {
+      if (y < 0 && c.up && x >= 0 && x < m.w) {
+        const n = getMap(c.up.map);
+        const nx = x + c.up.offset;
+        const ny = n.h + y;
+        if (nx >= 0 && nx < n.w && ny >= 0) return n.tiles[ny * n.w + nx];
+      }
+      if (y >= m.h && c.down && x >= 0 && x < m.w) {
+        const n = getMap(c.down.map);
+        const nx = x + c.down.offset;
+        const ny = y - m.h;
+        if (nx >= 0 && nx < n.w && ny < n.h) return n.tiles[ny * n.w + nx];
+      }
+      if (x < 0 && c.left && y >= 0 && y < m.h) {
+        const n = getMap(c.left.map);
+        const ny = y + c.left.offset;
+        const nx = n.w + x;
+        if (ny >= 0 && ny < n.h && nx >= 0) return n.tiles[ny * n.w + nx];
+      }
+      if (x >= m.w && c.right && y >= 0 && y < m.h) {
+        const n = getMap(c.right.map);
+        const ny = y + c.right.offset;
+        const nx = x - m.w;
+        if (ny >= 0 && ny < n.h && nx < n.w) return n.tiles[ny * n.w + nx];
+      }
+    }
+    return m.border;
+  }
+
+  inBounds(x: number, y: number) {
+    return x >= 0 && y >= 0 && x < this.map.w && y < this.map.h;
+  }
+
+  npcAt(x: number, y: number): NpcRuntime | undefined {
+    return this.npcs.find((n) => {
+      if (n.hidden) return false;
+      if (n.x === x && n.y === y) return true;
+      if (n.moving && n.x + DX[n.moving] === x && n.y + DY[n.moving] === y) return true;
+      return false;
+    });
+  }
+
+  itemAt(x: number, y: number) {
+    return this.map.items.find((it) => it.x === x && it.y === y && !this.s.flags['item:' + it.id]);
+  }
+
+  blocked(x: number, y: number, forNpc = false): boolean {
+    if (!this.inBounds(x, y)) return true;
+    const t = TILES[this.tileAt(x, y)];
+    if (t.solid || t.ledge) return true;
+    if (this.npcAt(x, y)) return true;
+    if (this.itemAt(x, y)) return true;
+    if (forNpc && this.px === x && this.py === y) return true;
+    if (forNpc && this.moving && this.px + DX[this.moving] === x && this.py + DY[this.moving] === y) return true;
+    if (forNpc && this.map.warps.some((w) => w.x === x && w.y === y)) return true;
+    return false;
+  }
+
+  // ---------- update ----------
+
+  update() {
+    const g = this.g;
+    if (this.banner && --this.banner.t <= 0) this.banner = null;
+    if (this.flashT > 0) this.flashT--;
+    if (this.playerEmote > 0) this.playerEmote--;
+    for (const w of [...this.waiters]) {
+      if (--w.t <= 0) {
+        this.waiters.splice(this.waiters.indexOf(w), 1);
+        w.res();
+      }
+    }
+    this.updateNpcs();
+    if (this.fade !== this.fadeTarget) {
+      this.fade += this.fadeTarget > this.fade ? 1 / 10 : -1 / 10;
+      if (Math.abs(this.fade - this.fadeTarget) < 0.05) {
+        this.fade = this.fadeTarget;
+        const r = this.fadeRes;
+        this.fadeRes = null;
+        r?.();
+      }
+      return;
+    }
+    if (this.moving) {
+      this.advanceMove();
+      return;
+    }
+    if (this.playerPath.length) {
+      const d = this.playerPath.shift()!;
+      this.dir = d;
+      this.beginMove(d, true);
+      return;
+    }
+    if (this.playerPathRes) {
+      const r = this.playerPathRes;
+      this.playerPathRes = null;
+      r();
+    }
+    if (this.busy > 0) return;
+    if (this.bumpCd > 0) this.bumpCd--;
+
+    const i = g.input;
+    if (i.pressed('start')) {
+      g.sfx('menu');
+      void this.run(async () => {
+        await g.open(new StartMenu(g, this));
+      });
+      return;
+    }
+    if (i.pressed('a')) {
+      this.interact();
+      return;
+    }
+    const d = i.dir();
+    if (!d) {
+      this.turnGrace = 0;
+      return;
+    }
+    if (d !== this.dir) {
+      this.dir = d;
+      this.s.dir = d;
+      this.turnGrace = i.heldFrames(d) <= 2 ? 5 : 0;
+      if (this.turnGrace) return;
+    }
+    if (this.turnGrace > 0) {
+      this.turnGrace--;
+      return;
+    }
+    this.tryMove(d);
+  }
+
+  private tryMove(d: Dir) {
+    const s = this.s;
+    // edge warp (standing on a mat and pushing out)
+    const ew = this.map.warps.find((w) => w.x === this.px && w.y === this.py && w.edge === d);
+    if (ew) {
+      this.g.sfx('door');
+      void this.run(async (c) => c.warp(ew.to, ew.tx, ew.ty, ew.dir ?? d));
+      return;
+    }
+    const tx = this.px + DX[d];
+    const ty = this.py + DY[d];
+    if (!this.inBounds(tx, ty)) {
+      const conn = this.map.connections?.[d];
+      if (conn) {
+        const n = getMap(conn.map);
+        let nx: number, ny: number;
+        if (d === 'up') [nx, ny] = [tx + conn.offset, n.h - 1];
+        else if (d === 'down') [nx, ny] = [tx + conn.offset, 0];
+        else if (d === 'left') [nx, ny] = [n.w - 1, ty + conn.offset];
+        else [nx, ny] = [0, ty + conn.offset];
+        const t = TILES[n.tiles[ny * n.w + nx]];
+        if (nx >= 0 && ny >= 0 && nx < n.w && ny < n.h && !t.solid) {
+          this.crossing = { map: conn.map, x: nx, y: ny };
+          this.beginMove(d, true);
+          return;
+        }
+      }
+      this.bump();
+      return;
+    }
+    const t = TILES[this.tileAt(tx, ty)];
+    if (t.ledge && d === 'down') {
+      if (!this.blocked(tx, ty + 1)) {
+        this.jump = 1;
+        this.g.sfx('ledge');
+        this.beginMove(d, true);
+        return;
+      }
+    }
+    if (this.blocked(tx, ty)) {
+      this.bump();
+      return;
+    }
+    s.dir = d;
+    this.beginMove(d, true);
+  }
+
+  private bump() {
+    if (this.bumpCd <= 0) {
+      this.g.sfx('bump');
+      this.bumpCd = 22;
+    }
+  }
+
+  private beginMove(d: Dir, force: boolean) {
+    if (!force) return;
+    this.moving = d;
+    this.off = 0;
+  }
+
+  private advanceMove() {
+    const running = this.busy === 0 && !this.jump && this.g.input.down('b');
+    const speed = running ? 2 : 1;
+    const dist = this.jump ? 32 : 16;
+    this.off += speed;
+    if (this.off >= dist) {
+      const d = this.moving!;
+      this.px += DX[d] * (this.jump ? 2 : 1);
+      this.py += DY[d] * (this.jump ? 2 : 1);
+      this.moving = null;
+      this.off = 0;
+      this.jump = 0;
+      this.stepParity ^= 1;
+      if (this.crossing) {
+        const cr = this.crossing;
+        this.crossing = null;
+        const prevMusic = this.map.music;
+        this.load(cr.map, cr.x, cr.y, d);
+        if (this.map.music !== prevMusic) this.g.music(this.map.music);
+        this.showBanner();
+        if (this.map.onEnter) void this.run(this.map.onEnter);
+      }
+      this.s.x = this.px;
+      this.s.y = this.py;
+      if (this.busy === 0 || this.playerPath.length === 0) this.onStep();
+      // keep walking without an idle frame between tiles while a direction is held
+      if (this.busy === 0 && !this.moving && this.fade === 0 && this.fadeTarget === 0) {
+        const held = this.g.input.dir();
+        if (held) {
+          this.dir = held;
+          this.s.dir = held;
+          this.turnGrace = 0;
+          this.tryMove(held);
+        }
+      }
+    }
+  }
+
+  private onStep() {
+    if (this.busy > 0 && this.playerPathRes) return;
+    const s = this.s;
+    s.steps++;
+    // step warps
+    const w = this.map.warps.find((w) => w.x === this.px && w.y === this.py && !w.edge);
+    if (w) {
+      this.g.sfx('door');
+      void this.run(async (c) => c.warp(w.to, w.tx, w.ty, w.dir ?? this.dir));
+      return;
+    }
+    // triggers
+    const tr = this.map.triggers.find(
+      (t) => this.px >= t.x && this.px < t.x + (t.w ?? 1) && this.py >= t.y && this.py < t.y + (t.h ?? 1) && (!t.cond || t.cond(s)),
+    );
+    if (tr) {
+      void this.run(tr.run);
+      return;
+    }
+    // poison
+    if (s.steps % 4 === 0) {
+      let hurt = false;
+      for (const m of s.party) {
+        if (m.status === 'PSN' && m.hp > 1) {
+          m.hp--;
+          hurt = true;
+        }
+      }
+      if (hurt) this.flashT = 4;
+    }
+    if (s.repel > 0) {
+      s.repel--;
+      if (s.repel === 0) {
+        void this.run(async (c) => c.say('The REPEL SPRAY wore off.'));
+        return;
+      }
+    }
+    if (this.checkTrainers()) return;
+    this.checkEncounter();
+  }
+
+  private checkTrainers(): boolean {
+    for (const n of this.npcs) {
+      if (n.hidden || !n.def.trainer || this.s.flags['tr:' + n.def.trainer]) continue;
+      const range = n.def.sight ?? 4;
+      for (let k = 1; k <= range; k++) {
+        const cx = n.x + DX[n.dir] * k;
+        const cy = n.y + DY[n.dir] * k;
+        if (cx === this.px && cy === this.py) {
+          void this.run((c) => this.trainerApproach(c, n, k - 1));
+          return true;
+        }
+        if (!this.inBounds(cx, cy) || TILES[this.tileAt(cx, cy)].solid || this.npcAt(cx, cy) || this.itemAt(cx, cy)) break;
+      }
+    }
+    return false;
+  }
+
+  private async trainerApproach(c: ScriptCtx, n: NpcRuntime, dist: number) {
+    c.g.sfx('exclaim');
+    await c.emote(n.def.id);
+    if (dist > 0) await c.walkNpc(n.def.id, new Array(dist).fill(n.dir));
+    this.dir = OPP[n.dir];
+    await this.trainerTalk(c, n);
+  }
+
+  private async trainerTalk(c: ScriptCtx, n: NpcRuntime) {
+    const t = TRAINERS[n.def.trainer!];
+    await c.say(t.intro);
+    const won = await c.battle(t.id);
+    if ((won || t.id === 'rival1') && n.def.afterWin) await n.def.afterWin(c);
+  }
+
+  private checkEncounter() {
+    const s = this.s;
+    const enc = this.map.encounters;
+    if (!enc) return;
+    const t = TILES[this.tileAt(this.px, this.py)];
+    if (!t.grass && !t.cave) return;
+    const rng = this.g.rng;
+    if (!rng.chance(enc.rate)) return;
+    const e = rng.weighted(enc.table);
+    const lvl = rng.range(e.min, e.max);
+    const lead = s.party.find(isAlive);
+    if (s.repel > 0 && lead && lvl < lead.lvl) return;
+    void this.run(async (c) => {
+      await c.wild(e.sp, lvl);
+    });
+  }
+
+  private interact() {
+    const fx = this.px + DX[this.dir];
+    const fy = this.py + DY[this.dir];
+    let n = this.npcAt(fx, fy);
+    if (!n && this.inBounds(fx, fy) && TILES[this.tileAt(fx, fy)].counter) n = this.npcAt(fx + DX[this.dir], fy + DY[this.dir]);
+    if (n && !n.moving) {
+      this.talkTo(n);
+      return;
+    }
+    const sign = this.map.signs.find((sg) => sg.x === fx && sg.y === fy);
+    if (sign) {
+      const txt = sign.text;
+      void this.run(async (c) => {
+        if (typeof txt === 'function') await txt(c);
+        else await c.say(txt);
+      });
+      return;
+    }
+    const it = this.itemAt(fx, fy);
+    if (it) {
+      void this.run(async (c) => {
+        c.set('item:' + it.id);
+        const def = itemDef(it.item);
+        addItem(this.s, it.item, it.n ?? 1);
+        c.g.sfx('item');
+        await c.say(`{PLAYER} found ${it.n && it.n > 1 ? it.n + 'x ' : ''}${def.name.toUpperCase()}!`);
+      });
+      return;
+    }
+    if (this.inBounds(fx, fy) && TILES[this.tileAt(fx, fy)].water) {
+      void this.run(async (c) => c.say('The water is deep and clear. Wildkin ripple beneath the surface.'));
+    }
+  }
+
+  private talkTo(n: NpcRuntime) {
+    const d = n.def;
+    void this.run(async (c) => {
+      n.dir = OPP[this.dir];
+      if (d.trainer) {
+        const t = TRAINERS[d.trainer];
+        if (!this.s.flags['tr:' + d.trainer]) {
+          await this.trainerTalk(c, n);
+          return;
+        }
+        if (!d.talk) {
+          await c.say(t.after);
+          return;
+        }
+      }
+      const talk = d.talk;
+      if (!talk) return;
+      if (typeof talk === 'function') await talk(c);
+      else await c.say(talk);
+    }, n);
+  }
+
+  // ---------- NPC movement ----------
+
+  private updateNpcs() {
+    for (const n of this.npcs) {
+      if (n.emote > 0) n.emote--;
+      if (n.hidden) continue;
+      const scripted = this.npcPaths.get(n);
+      if (n.moving) {
+        const sp = scripted?.speed ?? 1;
+        const step = Math.min(sp, 16 - Math.max(Math.abs(n.ox), Math.abs(n.oy)));
+        n.ox += DX[n.moving] * step;
+        n.oy += DY[n.moving] * step;
+        if (Math.abs(n.ox) >= 16 || Math.abs(n.oy) >= 16) {
+          n.x += DX[n.moving];
+          n.y += DY[n.moving];
+          n.ox = n.oy = 0;
+          n.moving = null;
+        }
+        continue;
+      }
+      if (scripted) {
+        if (!scripted.path.length) {
+          this.npcPaths.delete(n);
+          scripted.res();
+          continue;
+        }
+        const d = scripted.path.shift()!;
+        n.dir = d;
+        n.moving = d;
+        continue;
+      }
+      if (this.busy > 0) continue;
+      if (--n.timer > 0) continue;
+      n.timer = 90 + this.g.rng.int(140);
+      const mv = n.def.move ?? 'still';
+      if (mv === 'look') {
+        n.dir = this.g.rng.pick(['up', 'down', 'left', 'right'] as Dir[]);
+      } else if (mv === 'wander') {
+        const d = this.g.rng.pick(['up', 'down', 'left', 'right'] as Dir[]);
+        n.dir = d;
+        const tx = n.x + DX[d];
+        const ty = n.y + DY[d];
+        const r = n.def.radius ?? 2;
+        if (Math.abs(tx - n.homeX) <= r && Math.abs(ty - n.homeY) <= r && !this.blocked(tx, ty, true)) n.moving = d;
+      }
+    }
+  }
+
+  // ---------- scripting ----------
+
+  run(fn: Script, self: NpcRuntime | null = null): Promise<void> {
+    this.busy++;
+    const c = this.ctx(self);
+    return fn(c)
+      .catch((e) => console.error('Script error', e))
+      .finally(() => {
+        this.busy--;
+        this.refresh();
+        this.g.input.consume();
+      });
+  }
+
+  wait(frames: number): Promise<void> {
+    return new Promise((res) => this.waiters.push({ t: frames, res }));
+  }
+
+  fadeTo(v: number): Promise<void> {
+    if (this.fade === v) return Promise.resolve();
+    return new Promise((res) => {
+      this.fadeTarget = v;
+      this.fadeRes = res;
+    });
+  }
+
+  async doWarp(map: string, x: number, y: number, dir: Dir) {
+    await this.fadeTo(1);
+    const prevMusic = this.map.music;
+    this.load(map, x, y, dir);
+    if (this.map.music !== prevMusic) this.g.music(this.map.music);
+    await this.wait(4);
+    await this.fadeTo(0);
+    this.showBanner();
+    if (this.map.onEnter) await this.map.onEnter(this.ctx(null));
+  }
+
+  async whiteout() {
+    const g = this.g;
+    const s = this.s;
+    await say(g, '{PLAYER} has no more usable Wildkin!');
+    const lost = Math.floor(s.money / 2);
+    s.money -= lost;
+    await say(g, `{PLAYER} panicked and dropped $${lost}... {PLAYER} blacked out!`);
+    for (const m of s.party) healMon(m);
+    this.fade = 1;
+    this.fadeTarget = 1;
+    this.load(s.heal.map, s.heal.x, s.heal.y, 'up');
+    g.music(this.map.music);
+    await this.wait(20);
+    await this.fadeTo(0);
+    await say(g, s.heal.map === 'home' ? 'MOM: Oh, honey, you look exhausted! Rest up. Your Wildkin are all better now.' : 'Your Wildkin were brought back to the HAVEN and fully restored.');
+  }
+
+  ctx(self: NpcRuntime | null): ScriptCtx {
+    const g = this.g;
+    const ow = this;
+    const s = this.s;
+    const c: ScriptCtx = {
+      g,
+      s,
+      self,
+      say: (t) => say(g, t),
+      ask: (t, o, cancel = null) => ask(g, t, o, cancel),
+      yesNo: (t) => yesNo(g, t),
+      flag: (k) => !!s.flags[k],
+      set: (k, v = true) => {
+        if (v) s.flags[k] = true;
+        else delete s.flags[k];
+      },
+      async give(id, n = 1) {
+        addItem(s, id, n);
+        g.sfx('item');
+        await say(g, `{PLAYER} received ${n > 1 ? n + 'x ' : ''}${itemDef(id).name.toUpperCase()}!`);
+      },
+      async heal() {
+        const yes = await yesNo(g, 'Welcome to the HAVEN! Shall I restore your Wildkin to full health?');
+        if (!yes) {
+          await say(g, 'Take care out there!');
+          return;
+        }
+        await say(g, "Okay, I'll take your Wildkin for a moment.");
+        g.audio.stop();
+        g.sfx('heal');
+        await ow.wait(100);
+        for (const m of s.party) healMon(m);
+        if (ow.map.havenSpot) s.heal = { map: ow.map.id, x: ow.map.havenSpot.x, y: ow.map.havenSpot.y };
+        g.music(ow.map.music);
+        await say(g, 'Your Wildkin are fully rested. Come back anytime!');
+      },
+      async battle(id) {
+        const t = TRAINERS[id];
+        const team = trainerTeam(t, s).map(([sp, lvl]) => newMon(s, sp, lvl, g.rng, t.name));
+        await battleTransition(g, true);
+        const res: BattleResult = await g.open(new BattleScene(g, { kind: 'trainer', trainer: t, party: team, canLose: id === 'rival1' }));
+        if (res === 'lose') {
+          if (id === 'rival1') {
+            for (const m of s.party) healMon(m);
+            g.music(ow.map.music);
+            s.flags['tr:' + id] = true;
+            return false;
+          }
+          await ow.whiteout();
+          return false;
+        }
+        s.flags['tr:' + id] = true;
+        g.music(ow.map.music);
+        return true;
+      },
+      async wild(sp, lvl, opts = {}) {
+        const mon = newMon(s, sp, lvl, g.rng, '');
+        await battleTransition(g, false);
+        const res: BattleResult = await g.open(new BattleScene(g, { kind: 'wild', party: [mon], noRun: opts.noRun, music: opts.music }));
+        if (res === 'lose') {
+          await ow.whiteout();
+          return 'lose';
+        }
+        g.music(ow.map.music);
+        return res;
+      },
+      npc: (id) => ow.npcs.find((n) => n.def.id === id),
+      walkNpc(id, path, speed = 1) {
+        const n = ow.npcs.find((x) => x.def.id === id);
+        if (!n || !path.length) return Promise.resolve();
+        return new Promise((res) => ow.npcPaths.set(n, { path: [...path], speed, res }));
+      },
+      walkPlayer(path) {
+        if (!path.length) return Promise.resolve();
+        return new Promise((res) => {
+          ow.playerPath = [...path];
+          ow.playerPathRes = res;
+        });
+      },
+      face(id, dir) {
+        const n = ow.npcs.find((x) => x.def.id === id);
+        if (n) n.dir = dir;
+      },
+      facePlayer(dir) {
+        ow.dir = dir;
+        s.dir = dir;
+      },
+      faceToward(id) {
+        const n = ow.npcs.find((x) => x.def.id === id);
+        if (!n) return;
+        const dx = n.x - ow.px;
+        const dy = n.y - ow.py;
+        ow.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
+        n.dir = OPP[ow.dir];
+      },
+      show(id, x, y, dir) {
+        const n = ow.npcs.find((v) => v.def.id === id);
+        if (!n) return;
+        n.hidden = false;
+        if (x !== undefined) n.x = x;
+        if (y !== undefined) n.y = y;
+        if (dir) n.dir = dir;
+      },
+      hide(id) {
+        const n = ow.npcs.find((v) => v.def.id === id);
+        if (n) n.hidden = true;
+      },
+      async emote(id) {
+        if (id === 'player') ow.playerEmote = 40;
+        else {
+          const n = ow.npcs.find((v) => v.def.id === id);
+          if (n) n.emote = 40;
+        }
+        await ow.wait(40);
+      },
+      warp: (map, x, y, dir = 'down') => ow.doWarp(map, x, y, dir),
+      wait: (f) => ow.wait(f),
+      music: (name) => (name ? g.music(name) : g.audio.stop()),
+      shop: (stock) => g.open(new ShopScene(g, stock)),
+      storage: () => g.open(new StorageScene(g)),
+      async receiveMon(sp, lvl) {
+        const m = newMon(s, sp, lvl, g.rng);
+        const where = receiveMon(s, m);
+        markCaught(s, sp);
+        g.sfx('catch');
+        await say(g, `{PLAYER} received ${monName(m)}!`);
+        if (await yesNo(g, `Give a nickname to ${monName(m)}?`)) {
+          const nick = await g.open(new NamingScene(g, `${monName(m)}'s nickname?`, [], monName(m)));
+          if (nick && nick !== monName(m)) m.nick = nick;
+        }
+        if (where === 'box') await say(g, `${monName(m)} was sent to the LINK TERMINAL storage.`);
+      },
+      async badge(name) {
+        if (!s.badges.includes(name)) s.badges.push(name);
+        g.sfx('levelup');
+        await say(g, `{PLAYER} received the ${name} BADGE!`);
+      },
+      async flash() {
+        ow.flashT = 12;
+        await ow.wait(12);
+      },
+    };
+    return c;
+  }
+
+  // ---------- drawing ----------
+
+  playerPixel(): [number, number] {
+    let x = this.px * TS;
+    let y = this.py * TS;
+    if (this.moving) {
+      x += DX[this.moving] * this.off;
+      y += DY[this.moving] * this.off;
+    }
+    return [x, y];
+  }
+
+  draw(c: CanvasRenderingContext2D) {
+    const g = this.g;
+    const [ppx, ppy] = this.playerPixel();
+    let camX = ppx - 64;
+    let camY = ppy - 64;
+    const mw = this.map.w * TS;
+    const mh = this.map.h * TS;
+    if (!this.map.outdoor) {
+      if (mw <= 160) camX = (mw - 160) / 2;
+      if (mh <= 144) camY = (mh - 144) / 2;
+    }
+    camX = Math.round(camX);
+    camY = Math.round(camY);
+    const tx0 = Math.floor(camX / TS);
+    const ty0 = Math.floor(camY / TS);
+    for (let ty = ty0; ty <= ty0 + 10; ty++)
+      for (let tx = tx0; tx <= tx0 + 11; tx++) {
+        const def = TILES[this.tileAt(tx, ty)];
+        let fr = def.frames[Math.floor(g.frame / 20) % def.frames.length];
+        if (def.variants) {
+          // stable per-cell hash so variants never move as the camera scrolls
+          const h = (Math.imul(tx * 374761393 + ty * 668265263, 1274126177) >>> 0) % def.variants.length;
+          fr = def.variants[h];
+        }
+        const sx = tx * TS - camX;
+        const sy = ty * TS - camY;
+        c.drawImage(fr, sx, sy);
+        const fam = edgeFamily(def);
+        if (fam) {
+          if (!joins(fam, TILES[this.tileAt(tx, ty - 1)])) c.drawImage(edgeOverlay(fam, 'up'), sx, sy);
+          if (!joins(fam, TILES[this.tileAt(tx, ty + 1)])) c.drawImage(edgeOverlay(fam, 'down'), sx, sy);
+          if (!joins(fam, TILES[this.tileAt(tx - 1, ty)])) c.drawImage(edgeOverlay(fam, 'left'), sx, sy);
+          if (!joins(fam, TILES[this.tileAt(tx + 1, ty)])) c.drawImage(edgeOverlay(fam, 'right'), sx, sy);
+        }
+      }
+
+    // sprites sorted by y
+    type Drawable = { y: number; draw: () => void };
+    const list: Drawable[] = [];
+    for (const it of this.map.items) {
+      if (this.s.flags['item:' + it.id]) continue;
+      list.push({ y: it.y * TS, draw: () => c.drawImage(itemBallSprite(), it.x * TS - camX, it.y * TS - camY) });
+    }
+    for (const n of this.npcs) {
+      if (n.hidden) continue;
+      const sx = n.x * TS + n.ox - camX;
+      const sy = n.y * TS + n.oy - camY;
+      const look = LOOKS[n.def.look] ?? LOOKS.boy;
+      const prog = Math.max(Math.abs(n.ox), Math.abs(n.oy));
+      const phase = n.moving && prog >= 4 && prog < 12 ? 1 + ((n.x + n.y) % 2) : 0;
+      list.push({
+        y: n.y * TS + n.oy,
+        draw: () => {
+          c.drawImage(charFrame(charSprites(look), n.dir, phase), sx, sy - 4);
+          this.grassOver(c, n.x + (n.moving && prog >= 8 ? DX[n.moving] : 0), n.y + (n.moving && prog >= 8 ? DY[n.moving] : 0), camX, camY);
+          if (n.emote > 0) c.drawImage(exclaimSprite(), sx, sy - 20);
+        },
+      });
+    }
+    const jumpY = this.jump ? -Math.round(Math.sin((this.off / 32) * Math.PI) * 10) : 0;
+    list.push({
+      y: ppy,
+      draw: () => {
+        const phase = this.moving && this.off % 16 >= 4 && this.off % 16 < 12 ? 1 + this.stepParity : 0;
+        const sx = ppx - camX;
+        const sy = ppy - camY - 4 + jumpY;
+        if (this.jump) {
+          c.globalAlpha = 0.35;
+          rect(c, sx + 3, ppy - camY + 12, 10, 3, '#000');
+          c.globalAlpha = 1;
+        }
+        c.drawImage(charFrame(charSprites(LOOKS.player), this.dir, phase), sx, sy);
+        if (!this.jump) {
+          const gx = this.moving && this.off >= 8 ? this.px + DX[this.moving] : this.px;
+          const gy = this.moving && this.off >= 8 ? this.py + DY[this.moving] : this.py;
+          this.grassOver(c, gx, gy, camX, camY);
+        }
+        if (this.playerEmote > 0) c.drawImage(exclaimSprite(), sx, sy - 16);
+      },
+    });
+    list.sort((a, b) => a.y - b.y);
+    for (const d of list) d.draw();
+
+    if (this.banner) {
+      const t = this.banner.t;
+      const slide = t > 100 ? (110 - t) * 2.4 : t < 12 ? t * 2 : 24;
+      const w = this.banner.text.length * 6 + 16;
+      box(c, 4, slide - 24, w, 20);
+      drawText(c, this.banner.text, 12, slide - 18, UI.ink);
+    }
+    if (this.flashT > 0) fadeOverlay(c, 0.5, '#f8f0ff');
+    fadeOverlay(c, this.fade);
+  }
+
+  private grassOver(c: CanvasRenderingContext2D, tx: number, ty: number, camX: number, camY: number) {
+    if (!this.inBounds(tx, ty)) return;
+    const def = TILES[this.tileAt(tx, ty)];
+    if (!def.grass) return;
+    const fr = def.frames[Math.floor(this.g.frame / 20) % def.frames.length];
+    c.drawImage(fr, 0, 9, 16, 7, tx * TS - camX, ty * TS - camY + 9, 16, 7);
+  }
+}
+
+export function partyHpSummary(s: GameState): string {
+  return s.party.map((m) => `${monName(m)} ${m.hp}/${maxHp(m)}`).join(', ');
+}
+
+export function hasUsable(s: GameState) {
+  return anyAlive(s);
+}
