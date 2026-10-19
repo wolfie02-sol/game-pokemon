@@ -8,3 +8,4 @@ End-to-end checks that drive the real game in headless Chromium through `window.
 
 Each script prints PASS/FAIL lines and any page errors. Screenshots go to `tests/e2e/shots/` (git-ignored).
 `lib.mjs` loads Playwright from `/opt/npm-tools`; change the import there if Playwright lives elsewhere.
+Note: build without --min first; tests read scene class names, which minification renames.
