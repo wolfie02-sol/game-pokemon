@@ -243,7 +243,7 @@ const RIVAL_TEAMS: ((s: GameState) => [number, number][])[] = [
   (s) => [[N('Fluffin'), 9], [rivalStarter(s), 9]],
   (s) => [[N('Pecklet'), 15], [N('Coilkit'), 15], [N('Kitmote'), 15], rivalAce(s, 18)],
   (s) => [[N('Skyroost'), 20], [N('Dunemole'), 19], [N('Kitmote'), 19], rivalAce(s, 22)],
-  (s) => [[N('Skyroost'), 27], [N('Psyquill'), 25], [N('Venomaw'), 26], [N('Kitmote'), 26], rivalAce(s, 29)],
+  (s) => [[N('Skyroost'), 26], [N('Psyquill'), 24], [N('Venomaw'), 25], [N('Kitmote'), 25], rivalAce(s, 29)],
   (s) => [[N('Skyroost'), 34], [N('Augurowl'), 32], [N('Venomaw'), 32], [rivalKit(s), 33], [rivalStarter(s) + 1, 35]],
   (s) => [[N('Tempestrel'), 47], [N('Oracleon'), 47], [N('Ironox'), 46], [N('Swamplash'), 46], [rivalKit(s), 48], [rivalStarter(s) + 2, 51]],
 ];
