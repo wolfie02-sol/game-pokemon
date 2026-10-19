@@ -1105,8 +1105,8 @@ export function build(W: World) {
               await c.say('BREEDER: I raise partner Wildkin for PROF. FENN. I give one to every trainer who earns the BLOOM BADGE from MOSSA!');
               return;
             }
-            const choices = [SP.SPROUTLE, SP.EMBERKIT, SP.SPLASHEL].filter((x) => x !== c.s.starter && x !== rivalStarter(c.s));
-            const sp = choices[0];
+            // the rival's kind: the professor gives the remaining third one at eight badges
+            const sp = rivalStarter(c.s);
             await c.say('BREEDER: The BLOOM BADGE! As promised, take this partner. It is the same kind {RIVAL} chose... we had a spare!');
             c.set('gotBreederStarter');
             c.set('gift:' + sp);
