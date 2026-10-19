@@ -34,8 +34,10 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+html,
 body {
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* virtual handheld: no rubber-banding, no double-tap zoom, no tap highlight */
@@ -852,5 +854,15 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   * {
     scroll-behavior: auto !important;
+  }
+}
+
+/* very narrow phones: keep the rotated A/B pair inside the viewport */
+@media (max-width: 380px) {
+  .ab {
+    gap: 10px;
+  }
+  .layout-touch-portrait .side-right {
+    padding-right: 0;
   }
 }

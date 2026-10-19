@@ -212,6 +212,52 @@ export class World {
   }
 }
 
+/**
+ * Where a road reaches a map edge, the gap in the tree line on the neighbouring
+ * map is often plain ground. Pave that one edge tile when the road carries on
+ * just inside it, so roads read as continuous when crossing between maps.
+ */
+export function joinEdgeRoads(maps: Record<string, MapDef>) {
+  const isRoad = (t: number) => /^(path|road)/.test(TILES[t].name);
+  const isGround = (t: number) => /^(grass|snow|ash|sand)$/.test(TILES[t].name);
+  const isTree = (t: number) => /tree/.test(TILES[t].name);
+  const step: Record<Dir, [number, number]> = { up: [0, 1], down: [0, -1], left: [1, 0], right: [-1, 0] };
+  const cell = (m: MapDef, dir: Dir, i: number, depth: number): [number, number] => {
+    const [dx, dy] = step[dir];
+    if (dir === 'up') return [i, depth * dy];
+    if (dir === 'down') return [i, m.h - 1 + depth * dy];
+    if (dir === 'left') return [depth * dx, i];
+    return [m.w - 1 + depth * dx, i];
+  };
+  const at = (m: MapDef, [x, y]: [number, number]) => (x >= 0 && y >= 0 && x < m.w && y < m.h ? m.tiles[y * m.w + x] : -1);
+  const opp: Record<Dir, Dir> = { up: 'down', down: 'up', left: 'right', right: 'left' };
+  for (const a of Object.values(maps)) {
+    for (const dir of Object.keys(a.connections ?? {}) as Dir[]) {
+      const c = a.connections![dir]!;
+      const b = maps[c.map];
+      const n = dir === 'up' || dir === 'down' ? a.w : a.h;
+      for (let i = 0; i < n; i++) {
+        const j = i + c.offset;
+        const ea = cell(a, dir, i, 0), eb = cell(b, opp[dir], j, 0);
+        const ta = at(a, ea), tb = at(b, eb);
+        if (ta < 0 || tb < 0) continue;
+        // a's edge is ground, b's edge is road, and the road resumes just inside a
+        if (isGround(ta) && isRoad(tb) && isRoad(at(a, cell(a, dir, i, 1)))) a.tiles[ea[1] * a.w + ea[0]] = at(a, cell(a, dir, i, 1));
+        // a's edge is a plain gap through a tree wall: carry b's road through the gap
+        else if (isGround(ta) && isRoad(tb)) {
+          for (let d = 0; d < 6; d++) {
+            const p = cell(a, dir, i, d);
+            if (!isGround(at(a, p))) break;
+            const side = [cell(a, dir, i - 1, d), cell(a, dir, i + 1, d)].map((q) => at(a, q));
+            if (!side.some((t) => t >= 0 && isTree(t))) break;
+            a.tiles[p[1] * a.w + p[0]] = tb;
+          }
+        }
+      }
+    }
+  }
+}
+
 function edgeCells(m: MapDef, dir: Dir): number[] {
   const out: number[] = [];
   if (dir === 'up' || dir === 'down') {

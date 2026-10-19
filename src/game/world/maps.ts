@@ -2,7 +2,7 @@
  * The region of VARROW, assembled from its chapters.
  */
 import { buildTiles } from '../art/tiles';
-import { World } from './build';
+import { joinEdgeRoads, World } from './build';
 import { build as ch1 } from './region/ch1';
 import { build as ch2 } from './region/ch2';
 import { build as ch3 } from './region/ch3';
@@ -19,6 +19,7 @@ export function allMaps(): Record<string, MapDef> {
     buildTiles();
     const W = new World();
     for (const ch of [ch1, ch2, ch3, ch4, ch5, ch6, ch7]) ch(W);
+    joinEdgeRoads(W.maps);
     cache = W.maps;
   }
   return cache;
