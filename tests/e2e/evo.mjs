@@ -11,6 +11,8 @@ for (let i = 0; i < 400; i++) {
     const u = await page.evaluate(() => { const b = window.__wildkin.scenes.at(-1); return { k: b.ui?.kind, lv: [...(b.leveled ?? [])].length, txt: b.ui?.pages?.[b.ui.page]?.join(' ') }; });
     if (u.txt && !seen.has(u.txt)) { seen.add(u.txt); console.log('msg', u.txt, u.lv); }
     if (u.k === 'cmd') { await page.evaluate(() => { window.__wildkin.scenes.at(-1).cmdIdx = 0; }); }
+    // pick the first damaging move (slot 0 can be a status move)
+    if (u.k === 'move') { await page.evaluate(() => { const b = window.__wildkin.scenes.at(-1); const M = window.__wildkinDebug.data.MOVES; b.moveIdx = Math.max(0, b.me.mon.moves.findIndex((m) => M[m.id].pow > 0)); }); }
     if (u.k === 'yesno') { const pr = await page.evaluate(() => (window.__wildkin.scenes.at(-1).ui.prompt||[]).join(' ')); if (/Stop learning/i.test(pr)) { await page.evaluate(() => { window.__wildkin.scenes.at(-1).ui.idx = 0; }); await press(page, 'a', 40); } else await press(page, 'b', 40); continue; }
   }
   await press(page, 'a', 30);

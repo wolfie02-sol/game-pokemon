@@ -49,7 +49,8 @@ await start(page, { map: 'route1', x: 9, y: 10, party: [['Emberkit', 15]] });
 await ev(() => { const m = window.__wildkin.state.party[0]; m.exp = m.exp + 100000; });
 await wild(16, 5);
 let sawEvo = false;
-r = await drive(page, (u) => ({ cmd: 0, move: 0 }));
+// slot 1 is SPARK SPIT (Twin Kick at Lv10 pushed CLAW out, so slot 0 is a status move now)
+r = await drive(page, (u) => ({ cmd: 0, move: 1 }));
 const e1 = await S();
 ok('evolution after level up', e1.party[0].sp !== 4, JSON.stringify(e1.party[0]));
 // STATUS: poison ticks in field? check sleep/paralysis applied by a status move
