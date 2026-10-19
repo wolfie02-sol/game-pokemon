@@ -458,7 +458,7 @@ export function build(W: World) {
           dir: 'down',
           look: 'sable',
           cond: not('towerCleared'),
-          trainer: T('tw_sable', 'ADMIN', 'SABLE', [['Nocturne', 27], ['Venomaw', 27], ['Phantail', 28]], {
+          trainer: T('tw_sable', 'ADMIN', 'SABLE', [['Nocturne', 29], ['Venomaw', 30], ['Phantail', 31]], {
             look: 'sable',
             money: 60,
             smart: true,
@@ -745,7 +745,7 @@ export function build(W: World) {
           y: 2,
           dir: 'down',
           look: 'orin',
-          trainer: T('g6', 'LEADER', 'ORIN', [['Augurowl', 38], ['Mimeon', 37], ['Hypnotapir', 38], ['Oracleon', 43]], {
+          trainer: T('g6', 'LEADER', 'ORIN', [['Augurowl', 33], ['Mimeon', 33], ['Hypnotapir', 34], ['Starmind', 34], ['Oracleon', 36]], {
             look: 'orin',
             money: 99,
             smart: true,
@@ -859,7 +859,7 @@ export function build(W: World) {
           dir: 'left',
           look: 'corvin',
           cond: not('tr:ob_corvin'),
-          trainer: T('ob_corvin', 'ADMIN', 'CORVIN', [['Smogcloud', 36], ['Venomaw', 36], ['Nocturne', 37]], {
+          trainer: T('ob_corvin', 'ADMIN', 'CORVIN', [['Smogcloud', 31], ['Venomaw', 31], ['Nocturne', 32]], {
             look: 'corvin',
             money: 60,
             smart: true,
@@ -878,7 +878,7 @@ export function build(W: World) {
           dir: 'down',
           look: 'nyx',
           cond: not('observatoryCleared'),
-          trainer: T('ob_nyx', 'BOSS', 'NYX', [['Nocturne', 38], ['Smogcloud', 38], ['Venomaw', 39], ['Duskwraith', 41]], {
+          trainer: T('ob_nyx', 'BOSS', 'NYX', [['Nocturne', 33], ['Smogcloud', 34], ['Venomaw', 34], ['Duskwraith', 36]], {
             look: 'nyx',
             money: 80,
             smart: true,
@@ -1267,7 +1267,7 @@ export function build(W: World) {
           y: 2,
           dir: 'down',
           look: 'mossa',
-          trainer: T('g4', 'LEADER', 'MOSSA', [['Tanglewick', 26], ['Snaptrap', 28], ['Wiltbloom', 29]], {
+          trainer: T('g4', 'LEADER', 'MOSSA', [['Tanglewick', 27], ['Vinelet', 27], ['Snaptrap', 29], ['Wiltbloom', 30]], {
             look: 'mossa',
             money: 99,
             smart: true,

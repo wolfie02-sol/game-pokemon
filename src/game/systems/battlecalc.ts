@@ -172,11 +172,41 @@ export function chooseAiMove(rng: Rng, me: Fighter, foe: Fighter, smart: boolean
     }
     return { slot, mv, score };
   });
-  if (!smart || rng.chance(0.25)) {
+  // ordinary trainers pick loosely; bosses only rarely make a casual choice
+  if (!smart || rng.chance(0.1)) {
     const viable = scored.filter((s) => s.score > 0);
     const pick = rng.pick(viable.length ? viable : scored);
     return { ...pick.mv, slot: pick.slot };
   }
   scored.sort((x, y) => y.score - x.score);
   return { ...scored[0].mv, slot: scored[0].slot };
+}
+
+/**
+ * Bosses usually (70%) send in the Wildkin that matches up best against the
+ * player's current one (its best attack against the player's, minus the
+ * player's best against it), and they keep their ace (listed last) for last.
+ * The rest of the time they go in listed order, so they read as smart but
+ * not as perfect counter-pickers. Ordinary trainers keep their listed order.
+ */
+export function pickNextFoe(rng: Rng, party: Mon[], vs: Fighter, smart: boolean): number {
+  const alive = party.map((m, i) => (m.hp > 0 ? i : -1)).filter((i) => i >= 0);
+  if (!smart || alive.length <= 1) return alive[0] ?? -1;
+  const ace = party.length - 1;
+  const pool = alive.filter((i) => i !== ace);
+  if (!pool.length) return ace;
+  if (!rng.chance(0.7)) return pool[0];
+  let best = pool[0];
+  let bestScore = -Infinity;
+  for (const i of pool) {
+    const f = fighter(party[i]);
+    const dealt = Math.max(0, ...f.mon.moves.map((s) => (move(s.id).cat === 'status' ? 0 : calcDamage(rng, f, vs, move(s.id), false).damage)));
+    const taken = Math.max(0, ...vs.mon.moves.map((s) => (move(s.id).cat === 'status' ? 0 : calcDamage(rng, vs, f, move(s.id), false).damage)));
+    const score = dealt / Math.max(1, vs.mon.hp) - taken / Math.max(1, f.mon.hp);
+    if (score > bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  }
+  return best;
 }

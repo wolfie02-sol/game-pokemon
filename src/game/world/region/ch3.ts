@@ -184,7 +184,7 @@ export function build(W: World) {
           y: 2,
           dir: 'down',
           look: 'cass',
-          trainer: T('g3', 'LEADER', 'CASS', [['Coilorb', 21], ['Zapling', 20], ['Stormane', 24]], {
+          trainer: T('g3', 'LEADER', 'CASS', [['Coilorb', 21], ['Zappod', 22], ['Zapling', 22], ['Stormane', 25]], {
             look: 'cass',
             money: 99,
             smart: true,

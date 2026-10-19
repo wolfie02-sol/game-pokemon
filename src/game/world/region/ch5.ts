@@ -292,7 +292,8 @@ export function build(W: World) {
   const mcWarden = building(mc, 5, 13, 5, 'gold', 'house');
   const mcHouse = building(mc, 16, 13, 5, 'teal', 'house');
   mc.warps.push(
-    door(mcGym.x, mcGym.y, 'mire_gym', 4, 13),
+    // the story's order: MIND (Astra) comes before VENOM, which keeps the level curve steady
+    { ...door(mcGym.x, mcGym.y, 'mire_gym', 4, 13), cond: (s) => s.badges.length >= 5, locked: 'The GYM doors are sealed with vines. A sign reads: CHALLENGERS NEED FIVE BADGES. - SILAS' },
     door(mcPark.x, mcPark.y, 'park_gate', 4, 6),
     door(mcHaven.x, mcHaven.y, 'mire_haven', 4, 7),
     door(mcMart.x, mcMart.y, 'mire_mart', 3, 7),
@@ -451,6 +452,8 @@ export function build(W: World) {
           1,
           ['OLD SURFER: Whoa, a visitor! Nobody finds this place.', "OLD SURFER: You've got that look... the look of someone who wants to see what's past the horizon. Take my DRIFTBOARD, kid!"],
           'OLD SURFER: Face the water and press A to ride. Wild Wildkin swim right up to you out there. Gnarly!',
+          (s) => s.badges.length >= 6,
+          "OLD SURFER: Whoa, a visitor! The sea out past the park is rough, kid. Come back with six BADGES and I'll lend you my DRIFTBOARD.",
         ),
       },
     ]),
@@ -468,7 +471,7 @@ export function build(W: World) {
           y: 2,
           dir: 'down',
           look: 'silas',
-          trainer: T('g5', 'LEADER', 'SILAS', [['Smogpuff', 37], ['Sludgemaw', 39], ['Venomaw', 38], ['Smogcloud', 43]], {
+          trainer: T('g5', 'LEADER', 'SILAS', [['Smogpuff', 36], ['Venomaw', 37], ['Thornmarch', 38], ['Sludgemaw', 38], ['Smogcloud', 40]], {
             look: 'silas',
             money: 99,
             smart: true,

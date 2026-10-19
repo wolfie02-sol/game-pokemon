@@ -36,7 +36,7 @@ export interface ItemDef {
 
 const I = (i: ItemDef) => i;
 
-const TM_MOVES = [
+export const TM_MOVES = [
   'rally', 'swipes', 'mudvolley', 'iceneedle', 'glacierbeam', 'whiteout', 'ram', 'overdrive', 'edgechop', 'mountaintoss',
   'riptide', 'arcbolt', 'thunderclap', 'earthshake', 'burrow', 'psyblast', 'mindveil', 'mirrorward', 'restore', 'nap',
   'venomseep', 'cragedge', 'flareburst', 'sunlance', 'shadepulse', 'drillbeak', 'rush', 'crushjaw', 'lastblaze', 'wyrmfury',

@@ -40,7 +40,7 @@
     prompts: {},
     battles: { wild: 0, trainer: 0, won: 0, lost: 0, caught: 0, ran: 0, whiteouts: 0 },
     mem: mem0 || { talked: {}, trig: {}, avoid: {}, fails: {}, saves: 0, lastSaveBadges: -1, starter: null },
-    opts: { starter: 'EMBERKIT' },
+    opts: { starter: 'EMBERKIT', policy: 'all' },
     status: '',
     goal: null,
     done: false,
@@ -140,6 +140,19 @@
   const alive = (m) => m.hp > 0;
   const lead = () => S().party.find(alive) || S().party[0];
   const bestLevel = () => Math.max(0, ...S().party.map((m) => m.lvl));
+  /** level a player would judge their team by: the carry's level, or the average of the top three */
+  const readyLevel = () => {
+    const ls = S().party.map((m) => m.lvl).sort((a, b) => b - a);
+    if (!ls.length) return 0;
+    if (B.opts.policy === 'carry') {
+      const c = S().party.find((m) => m.uid === B.mem.carryUid);
+      return c ? c.lvl : ls[0];
+    }
+    // most players judge readiness by their lead; balanced-team players by their top three
+    if (B.opts.policy !== 'typesmart' && B.opts.policy !== 'rotate') return ls[0];
+    const top = ls.slice(0, 3);
+    return Math.floor(top.reduce((a, b) => a + b, 0) / top.length);
+  };
   const moveByName = (n) => Object.values(X.MOVES).find((m) => m.name.toUpperCase() === n.toUpperCase());
 
   function estDamage(att, def, moveId) {
@@ -212,8 +225,11 @@
     }
     const maxL = Math.max(...team.map((x) => x[1]));
     const fails = B.mem.fails[id] || 0;
-    const need = maxL + (t.smart ? 2 : -3) + fails * 3;
-    return bestLevel() >= need;
+    const pol = B.opts.policy;
+    // how close to the boss's best Wildkin this kind of player wants to be before trying
+    const bossMargin = { all: 1, normal: 0, minimal: -2, typesmart: -1, carry: 1, rotate: 0, underlevel: -5 }[pol] ?? 0;
+    const need = maxL + (t.smart ? bossMargin : -4) + fails * 2;
+    return readyLevel() >= need;
   }
 
   // ------------------------------------------------------------ world graph
@@ -478,7 +494,8 @@
           // after one league rematch, leave the Elite Four alone so the rest of the postgame gets explored
           if (s.flags.champion && /^(e4_|champ_room)/.test(id) && (B.mem.leagueClears || 0) >= 2) continue;
           if (!trainerReady(tid)) {
-            add({ type: 'trainer-unready', key, tid }, id, n.x, n.y);
+            // only bosses are worth training for; ordinary trainers above us are simply left for later
+            if (D.trainers[tid]?.smart) add({ type: 'trainer-unready', key, tid }, id, n.x, n.y);
             continue;
           }
           add({ type: 'talk', key, tid, bias: 0 }, id, n.x, n.y);
@@ -581,7 +598,9 @@
 
   function needHeal() {
     const s = S();
-    const L = s.party.reduce((a, m) => (m.lvl > a.lvl ? m : a), s.party[0]);
+    // the Wildkin that leads (the carry, for a one-partner player) is the one that has to be healthy
+    const carry = B.opts.policy === 'carry' ? s.party.find((m) => m.uid === B.mem.carryUid) : null;
+    const L = carry || s.party.reduce((a, m) => (m.lvl > a.lvl ? m : a), s.party[0]);
     if (!L) return false;
     if (!alive(L)) return true;
     if (hpFrac(L) < 0.45) return true;
@@ -601,6 +620,7 @@
   // ------------------------------------------------------------ scene handlers
   function logText(t) {
     B.dialogCount++;
+    if (B.textLog) B.textLog.push(t);
     if (B.texts.size < 6000) B.texts.add(t);
     if (/undefined|NaN|\{[A-Z]+\}|\[object/.test(t)) issue('TEXT PLACEHOLDER: ' + t.slice(0, 120));
   }
@@ -612,6 +632,10 @@
       if (sc.page === 0) logText(t);
       const lm = /^(.*?) wants to learn (.*?)\. But/.exec(t);
       if (lm) B.lastLearn = { mon: lm[1], move: lm[2] };
+      if (/blacked out/.test(t)) {
+        B.battles.whiteouts++;
+        B.mem.whiteouts = (B.mem.whiteouts || 0) + 1;
+      }
       if (/received the (\w+) BADGE|BADGE/.test(t) && /received|earned/.test(t)) ev('TEXT: ' + t.slice(0, 80));
     }
     await tap('a', 1, 3);
@@ -689,13 +713,45 @@
     return null;
   }
 
+  function finishBattle() {
+    const b = B.curBattle;
+    if (!b || b._botDone) return;
+    b._botDone = true;
+    const id = b._bot.trainer;
+    if (b.o.kind === 'wild') {
+      B.mem.wildFought = (B.mem.wildFought || 0) + 1;
+      if (b._bot.grind) B.mem.grindFought = (B.mem.grindFought || 0) + 1;
+      return;
+    }
+    const won = !!S().flags['tr:' + id];
+    if (!won) B.mem.fails[id] = (B.mem.fails[id] || 0) + 1;
+    if (b._bot.boss) {
+      B.mem.bossLog = B.mem.bossLog || [];
+      B.mem.bossLog.push({ ...b._bot.boss, won, wildSince: (B.mem.wildFought || 0) - (B.mem.lastBossWild || 0), grindSince: (B.mem.grindFought || 0) - (B.mem.lastBossGrind || 0), fEnd: B.frames });
+      if (won) {
+        B.mem.lastBossWild = B.mem.wildFought || 0;
+        B.mem.lastBossGrind = B.mem.grindFought || 0;
+      }
+      ev(`BOSS ${id} ${won ? 'WON' : 'LOST'} team ${b._bot.boss.team.join('/')} vs max ${b._bot.boss.foeMax}`);
+    }
+    saveMem();
+  }
+
   async function onBattle(b) {
     const ui = b.ui;
     if (B.curBattle !== b) {
+      finishBattle();
       B.curBattle = b;
-      b._bot = { heals: 0, pods: 0, switched: 0, trainer: b.o.trainer ? b.o.trainer.id : null };
+      b._bot = { heals: 0, pods: 0, switched: 0, trainer: b.o.trainer ? b.o.trainer.id : null, grind: B.goal?.type === 'grind' };
       if (b.o.kind === 'wild') B.battles.wild++;
       else B.battles.trainer++;
+      if (b.o.trainer && b.o.trainer.smart) {
+        b._bot.boss = { id: b.o.trainer.id, name: b.o.trainer.name, foe: b.o.party.map((m) => m.lvl), foeMax: Math.max(...b.o.party.map((m) => m.lvl)), team: S().party.map((m) => m.lvl), badges: S().badges.length, f: B.frames };
+      }
+    }
+    if (ui.kind === 'text' && B.textLog && b._lastLogged !== ui.pages) {
+      b._lastLogged = ui.pages;
+      B.textLog.push(ui.pages.map((p) => p.join(' ')).join(' '));
     }
     if (ui.kind === 'text' || ui.kind === 'stats') return tap('a', 1, 3);
     if (ui.kind === 'none') return frame(1);
@@ -725,7 +781,20 @@
       // heal when in danger
       const heal = bestHeal();
       const foeThreat = foe.lvl >= me.lvl - 3 || b.o.kind === 'trainer';
-      if (heal && hpFrac(me) < 0.3 && st.heals < 4 && foeThreat && foe.hp > 0) {
+      const boss = !!(b.o.trainer && b.o.trainer.smart);
+      // a sensible player revives a fallen teammate during a boss fight
+      const rev = ['maxrevive', 'revive'].find((r) => (S().bag[r] ?? 0) > 0);
+      const fallen = S().party.findIndex((m) => !alive(m) && m.lvl >= me.lvl - 8);
+      if (boss && rev && fallen >= 0 && st.heals < 8 && hpFrac(me) > 0.5) {
+        st.heals++;
+        B.battleItem = rev;
+        B.itemTarget = fallen;
+        return cmdTo(1);
+      }
+      // healing only helps if the next hit won't simply undo it
+      const foeHit = Math.max(0, ...foe.moves.map((x) => estDamage(foe, me, x.id)));
+      const healAmt = Math.min(X.maxHp(me) - me.hp, { hyperpotion: 200, superpotion: 50, potion: 20, maxpotion: 9999, fullrestore: 9999 }[heal] ?? 20);
+      if (heal && hpFrac(me) < 0.3 && st.heals < (boss ? 8 : 4) && foeThreat && foe.hp > 0 && me.hp + healAmt > foeHit * 1.3) {
         st.heals++;
         B.battleItem = heal;
         B.itemTarget = b.meIdx;
@@ -748,13 +817,48 @@
           return cmdTo(0);
         }
       }
+      // play-style: skip wild fights that a player of this style would not bother with
+      const pol = B.opts.policy;
+      if (b.o.kind === 'wild' && !b.o.noRun && !shouldCatch(foe, b) && B.goal?.type !== 'grind') {
+        if (pol === 'minimal' || (pol !== 'all' && me.lvl >= foe.lvl + 6)) return cmdTo(3);
+      }
       // switch out of hopeless matchups in trainer battles
       const bm = bestMove(me, foe);
-      if (b.o.kind === 'trainer' && st.switched < 2 && bm.dmg < foe.hp * 0.12) {
+      if (pol === 'typesmart' && b.o.kind === 'trainer' && st.switched < 3) {
+        const t = chooseSwitchTarget(foe, b.meIdx);
+        if (t >= 0 && t !== b.meIdx) {
+          const mine = bm.dmg / Math.max(1, foe.hp);
+          const theirs = bestMove(S().party[t], foe).dmg / Math.max(1, foe.hp);
+          if (theirs > mine * 1.6 && theirs > 0.25) {
+            st.switched++;
+            B.switchTo = t;
+            return cmdTo(2);
+          }
+        }
+      }
+      if (b.o.kind === 'trainer' && pol !== 'carry' && st.switched < 2 && bm.dmg < foe.hp * 0.12) {
         const t = chooseSwitchTarget(foe, b.meIdx);
         if (t >= 0 && bestMove(S().party[t], foe).dmg > foe.hp * 0.3) {
           st.switched++;
           B.switchTo = t;
+          return cmdTo(2);
+        }
+      }
+      // facing a knockout blow from a foe we can't beat first: switch to whoever takes it best
+      if (b.o.kind === 'trainer' && pol !== 'carry' && st.switched < 3 && foeHit >= me.hp && bm.dmg < foe.hp) {
+        let bi = -1;
+        let bt = Infinity;
+        S().party.forEach((m, i) => {
+          if (i === b.meIdx || !alive(m)) return;
+          const taken = Math.max(0, ...foe.moves.map((x) => estDamage(foe, m, x.id))) / Math.max(1, m.hp);
+          if (taken < bt) {
+            bt = taken;
+            bi = i;
+          }
+        });
+        if (bi >= 0 && bt < 0.5) {
+          st.switched++;
+          B.switchTo = bi;
           return cmdTo(2);
         }
       }
@@ -1042,9 +1146,25 @@
 
   function maybeMenuTask() {
     const s = S();
-    // keep the strongest healthy Wildkin in front
-    const strongest = s.party.reduce((bi, m, i) => (alive(m) && (bi < 0 || m.lvl > s.party[bi].lvl) ? i : bi), -1);
-    if (strongest > 0 && alive(s.party[strongest]) && s.party[strongest].lvl > s.party[0].lvl) return { kind: 'reorder', from: strongest, to: 0 };
+    const pol = B.opts.policy;
+    if (pol === 'carry') {
+      // one partner does the work: the starter stays in front
+      B.mem.carryUid = B.mem.carryUid ?? s.party[0]?.uid;
+      const ci = s.party.findIndex((m) => m.uid === B.mem.carryUid);
+      if (ci > 0 && alive(s.party[ci])) return { kind: 'reorder', from: ci, to: 0 };
+    } else if (pol === 'rotate') {
+      // changes the lead often: every few battles the next healthy team member takes the front
+      const n = B.battles.wild + B.battles.trainer;
+      if (n - (B.mem.lastRotate || 0) >= 4 && s.party.length > 1) {
+        B.mem.lastRotate = n;
+        const order = s.party.map((m, i) => i).slice(1).filter((i) => alive(s.party[i]) && hpFrac(s.party[i]) > 0.5);
+        if (order.length) return { kind: 'reorder', from: order[0], to: 0 };
+      }
+    } else {
+      // keep the strongest healthy Wildkin in front
+      const strongest = s.party.reduce((bi, m, i) => (alive(m) && (bi < 0 || m.lvl > s.party[bi].lvl) ? i : bi), -1);
+      if (strongest > 0 && alive(s.party[strongest]) && s.party[strongest].lvl > s.party[0].lvl) return { kind: 'reorder', from: strongest, to: 0 };
+    }
     const L = s.party[0];
     if (!L) return null;
     // field heal with potions when only HP is low
@@ -1067,14 +1187,22 @@
         }
       }
       if (def.kind === 'tm' && !(B.mem.usedTm || {})[id]) {
-        const m = s.party[0];
-        if (X.canLearnTM(sp(m.sp), def.move) && !m.moves.some((x) => x.id === def.move)) {
+        // teach it to whichever team member gains the most from it
+        let bestI = -1;
+        let gain = 0;
+        s.party.forEach((m, i) => {
+          if (!X.canLearnTM(sp(m.sp), def.move) || m.moves.some((x) => x.id === def.move)) return;
           const vals = m.moves.map((x) => moveValue(m, x.id));
-          if (m.moves.length < 4 || moveValue(m, def.move) > Math.min(...vals) * 1.1) {
-            B.mem.usedTm = B.mem.usedTm || {};
-            B.mem.usedTm[id] = 1;
-            return { kind: 'useItem', item: id, target: 0 };
+          const g2 = m.moves.length < 4 ? moveValue(m, def.move) : moveValue(m, def.move) - Math.min(...vals) * 1.1;
+          if (g2 > gain) {
+            gain = g2;
+            bestI = i;
           }
+        });
+        if (bestI >= 0) {
+          B.mem.usedTm = B.mem.usedTm || {};
+          B.mem.usedTm[id] = 1;
+          return { kind: 'useItem', item: id, target: bestI };
         }
       }
     }
@@ -1088,6 +1216,7 @@
 
   async function onOverworld(o) {
     const s = S();
+    if (B.curBattle && B.curBattle.closed) finishBattle();
     if (!idle(o)) {
       releaseAll();
       return frame(1);
@@ -1148,6 +1277,8 @@
       if (goal && unready.length && goal.cost > 400) goal = null;
     }
     if (!goal && unready.length) goal = grindGoal(P);
+    // nowhere to train (e.g. inside the league): take the boss on anyway
+    if (!goal && unready.length) goal = { ...unready.sort((a, c) => a.cost - c.cost)[0], type: 'talk' };
     if (!goal) {
       B.noGoalCount++;
       if (B.noGoalCount % 50 === 1) ev('NO GOAL at ' + s.map + ' unready=' + unready.map((u) => u.tid).join(','));
@@ -1325,6 +1456,10 @@
       done: B.done,
       sinceProgress: B.frames - B.lastProgressFrame,
       playTime: s ? Math.round(s.playTime) : 0,
+      bossLog: B.mem.bossLog || [],
+      wildFought: B.mem.wildFought || 0,
+      grindFought: B.mem.grindFought || 0,
+      whiteouts: B.mem.whiteouts || 0,
     };
   };
 

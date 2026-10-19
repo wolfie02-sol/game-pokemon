@@ -1,0 +1,1223 @@
+{
+ "summary": {
+  "frames": 30000,
+  "scene": "BattleTransition",
+  "map": "route18",
+  "pos": [
+   11,
+   5
+  ],
+  "badges": [
+   "BOULDER",
+   "RIPPLE",
+   "SPARK",
+   "BLOOM",
+   "MIND",
+   "VENOM",
+   "CINDER",
+   "FROST"
+  ],
+  "party": [
+   "Pyrolion:61:183",
+   "Gnawlord:56:129",
+   "Glimmoth:56:143",
+   "Glimmoth:55:137",
+   "Stormane:55:132",
+   "Vespire:56:152"
+  ],
+  "money": 7277,
+  "caught": 52,
+  "seen": 128,
+  "champion": true,
+  "goal": {
+   "type": "talk",
+   "key": "mirecoast:c2",
+   "cost": 74
+  },
+  "battles": {
+   "wild": 13,
+   "trainer": 2,
+   "won": 0,
+   "lost": 0,
+   "caught": 0,
+   "ran": 0,
+   "whiteouts": 1
+  },
+  "issues": 0,
+  "status": "",
+  "done": false,
+  "sinceProgress": 19207,
+  "playTime": 14090,
+  "bossLog": [
+   {
+    "id": "g1",
+    "name": "GARRICK",
+    "foe": [
+     10,
+     12
+    ],
+    "foeMax": 12,
+    "team": [
+     13,
+     8,
+     8,
+     8,
+     8,
+     8
+    ],
+    "badges": 0,
+    "f": 152773,
+    "won": true,
+    "wildSince": 88,
+    "grindSince": 77,
+    "fEnd": 156678
+   },
+   {
+    "id": "rival3",
+    "name": "{RIVAL}",
+    "foe": [
+     17,
+     15,
+     16,
+     18
+    ],
+    "foeMax": 18,
+    "team": [
+     16,
+     11,
+     11,
+     11,
+     11,
+     11
+    ],
+    "badges": 1,
+    "f": 197638,
+    "won": true,
+    "wildSince": 7,
+    "grindSince": 0,
+    "fEnd": 201410
+   },
+   {
+    "id": "g2",
+    "name": "NERISSA",
+    "foe": [
+     17,
+     17,
+     18,
+     20
+    ],
+    "foeMax": 20,
+    "team": [
+     21,
+     15,
+     15,
+     15,
+     15,
+     15
+    ],
+    "badges": 1,
+    "f": 235351,
+    "won": true,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 239203
+   },
+   {
+    "id": "cv_sable",
+    "name": "SABLE",
+    "foe": [
+     12,
+     13,
+     14
+    ],
+    "foeMax": 14,
+    "team": [
+     21,
+     16,
+     16,
+     16,
+     16,
+     16
+    ],
+    "badges": 2,
+    "f": 248016,
+    "won": true,
+    "wildSince": 2,
+    "grindSince": 0,
+    "fEnd": 249362
+   },
+   {
+    "id": "rival4",
+    "name": "{RIVAL}",
+    "foe": [
+     20,
+     19,
+     19,
+     22
+    ],
+    "foeMax": 22,
+    "team": [
+     24,
+     17,
+     18,
+     18,
+     17,
+     18
+    ],
+    "badges": 2,
+    "f": 274407,
+    "won": true,
+    "wildSince": 1,
+    "grindSince": 0,
+    "fEnd": 278306
+   },
+   {
+    "id": "g3",
+    "name": "CASS",
+    "foe": [
+     21,
+     22,
+     22,
+     25
+    ],
+    "foeMax": 25,
+    "team": [
+     27,
+     21,
+     21,
+     21,
+     21,
+     21
+    ],
+    "badges": 2,
+    "f": 316486,
+    "won": true,
+    "wildSince": 3,
+    "grindSince": 0,
+    "fEnd": 319987
+   },
+   {
+    "id": "rival5",
+    "name": "{RIVAL}",
+    "foe": [
+     27,
+     25,
+     26,
+     26,
+     29
+    ],
+    "foeMax": 29,
+    "team": [
+     29,
+     23,
+     23,
+     23,
+     23,
+     22
+    ],
+    "badges": 3,
+    "f": 357769,
+    "won": true,
+    "wildSince": 17,
+    "grindSince": 0,
+    "fEnd": 363601
+   },
+   {
+    "id": "g4",
+    "name": "MOSSA",
+    "foe": [
+     27,
+     27,
+     29,
+     30
+    ],
+    "foeMax": 30,
+    "team": [
+     33,
+     27,
+     27,
+     27,
+     27,
+     26
+    ],
+    "badges": 3,
+    "f": 399941,
+    "won": true,
+    "wildSince": 7,
+    "grindSince": 0,
+    "fEnd": 402802
+   },
+   {
+    "id": "hd_corvin",
+    "name": "CORVIN",
+    "foe": [
+     29,
+     30,
+     31
+    ],
+    "foeMax": 31,
+    "team": [
+     36,
+     30,
+     30,
+     30,
+     30,
+     30
+    ],
+    "badges": 4,
+    "f": 446000,
+    "won": true,
+    "wildSince": 1,
+    "grindSince": 0,
+    "fEnd": 447083
+   },
+   {
+    "id": "tw_sable",
+    "name": "SABLE",
+    "foe": [
+     29,
+     30,
+     31
+    ],
+    "foeMax": 31,
+    "team": [
+     37,
+     31,
+     30,
+     30,
+     30,
+     30
+    ],
+    "badges": 4,
+    "f": 458900,
+    "won": true,
+    "wildSince": 1,
+    "grindSince": 0,
+    "fEnd": 459862
+   },
+   {
+    "id": "dojo_master",
+    "name": "MASTER TAO",
+    "foe": [
+     34,
+     34,
+     35
+    ],
+    "foeMax": 35,
+    "team": [
+     40,
+     33,
+     33,
+     33,
+     33,
+     33
+    ],
+    "badges": 4,
+    "f": 497721,
+    "won": true,
+    "wildSince": 6,
+    "grindSince": 0,
+    "fEnd": 499223
+   },
+   {
+    "id": "rival6",
+    "name": "{RIVAL}",
+    "foe": [
+     34,
+     32,
+     32,
+     33,
+     35
+    ],
+    "foeMax": 35,
+    "team": [
+     43,
+     36,
+     36,
+     36,
+     36,
+     36
+    ],
+    "badges": 4,
+    "f": 518041,
+    "won": true,
+    "wildSince": 1,
+    "grindSince": 0,
+    "fEnd": 520127
+   },
+   {
+    "id": "ob_corvin",
+    "name": "CORVIN",
+    "foe": [
+     31,
+     31,
+     32
+    ],
+    "foeMax": 32,
+    "team": [
+     45,
+     37,
+     37,
+     37,
+     37,
+     37
+    ],
+    "badges": 4,
+    "f": 525577,
+    "won": true,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 526482
+   },
+   {
+    "id": "ob_nyx",
+    "name": "NYX",
+    "foe": [
+     33,
+     34,
+     34,
+     36
+    ],
+    "foeMax": 36,
+    "team": [
+     45,
+     37,
+     37,
+     37,
+     37,
+     37
+    ],
+    "badges": 4,
+    "f": 526691,
+    "won": true,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 528642
+   },
+   {
+    "id": "g6",
+    "name": "ORIN",
+    "foe": [
+     33,
+     33,
+     34,
+     34,
+     36
+    ],
+    "foeMax": 36,
+    "team": [
+     46,
+     38,
+     38,
+     38,
+     38,
+     38
+    ],
+    "badges": 4,
+    "f": 533258,
+    "won": true,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 534828
+   },
+   {
+    "id": "g5",
+    "name": "SILAS",
+    "foe": [
+     36,
+     37,
+     38,
+     38,
+     40
+    ],
+    "foeMax": 40,
+    "team": [
+     47,
+     39,
+     39,
+     39,
+     39,
+     39
+    ],
+    "badges": 5,
+    "f": 572515,
+    "won": true,
+    "wildSince": 2,
+    "grindSince": 0,
+    "fEnd": 574006
+   },
+   {
+    "id": "g7",
+    "name": "VULK",
+    "foe": [
+     41,
+     42,
+     42,
+     43,
+     45
+    ],
+    "foeMax": 45,
+    "team": [
+     53,
+     43,
+     43,
+     43,
+     43,
+     41
+    ],
+    "badges": 6,
+    "f": 629712,
+    "won": true,
+    "wildSince": 35,
+    "grindSince": 0,
+    "fEnd": 630877
+   },
+   {
+    "id": "g8",
+    "name": "ISOLDE",
+    "foe": [
+     45,
+     46,
+     46,
+     47,
+     49
+    ],
+    "foeMax": 49,
+    "team": [
+     55,
+     45,
+     45,
+     45,
+     46,
+     44
+    ],
+    "badges": 7,
+    "f": 721590,
+    "won": true,
+    "wildSince": 41,
+    "grindSince": 0,
+    "fEnd": 725740
+   },
+   {
+    "id": "rival7",
+    "name": "{RIVAL}",
+    "foe": [
+     47,
+     47,
+     46,
+     46,
+     48,
+     51
+    ],
+    "foeMax": 51,
+    "team": [
+     56,
+     47,
+     47,
+     47,
+     47,
+     45
+    ],
+    "badges": 8,
+    "f": 730355,
+    "won": false,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 733157
+   },
+   {
+    "id": "rival7",
+    "name": "{RIVAL}",
+    "foe": [
+     47,
+     47,
+     46,
+     46,
+     48,
+     51
+    ],
+    "foeMax": 51,
+    "team": [
+     56,
+     47,
+     48,
+     48,
+     48,
+     47
+    ],
+    "badges": 8,
+    "f": 740028,
+    "won": false,
+    "wildSince": 3,
+    "grindSince": 0,
+    "fEnd": 741225
+   },
+   {
+    "id": "rival7",
+    "name": "{RIVAL}",
+    "foe": [
+     47,
+     47,
+     46,
+     46,
+     48,
+     51
+    ],
+    "foeMax": 51,
+    "team": [
+     56,
+     47,
+     48,
+     48,
+     48,
+     47
+    ],
+    "badges": 8,
+    "f": 742043,
+    "won": false,
+    "wildSince": 3,
+    "grindSince": 0,
+    "fEnd": 745407
+   },
+   {
+    "id": "rival7",
+    "name": "{RIVAL}",
+    "foe": [
+     47,
+     47,
+     46,
+     46,
+     48,
+     51
+    ],
+    "foeMax": 51,
+    "team": [
+     56,
+     48,
+     48,
+     48,
+     48,
+     47
+    ],
+    "badges": 8,
+    "f": 746225,
+    "won": false,
+    "wildSince": 3,
+    "grindSince": 0,
+    "fEnd": 748869
+   },
+   {
+    "id": "rival7",
+    "name": "{RIVAL}",
+    "foe": [
+     47,
+     47,
+     46,
+     46,
+     48,
+     51
+    ],
+    "foeMax": 51,
+    "team": [
+     57,
+     48,
+     49,
+     48,
+     48,
+     48
+    ],
+    "badges": 8,
+    "f": 749687,
+    "won": false,
+    "wildSince": 3,
+    "grindSince": 0,
+    "fEnd": 753059
+   },
+   {
+    "id": "rival7",
+    "name": "{RIVAL}",
+    "foe": [
+     47,
+     47,
+     46,
+     46,
+     48,
+     51
+    ],
+    "foeMax": 51,
+    "team": [
+     57,
+     49,
+     49,
+     49,
+     49,
+     49
+    ],
+    "badges": 8,
+    "f": 753877,
+    "won": false,
+    "wildSince": 3,
+    "grindSince": 0,
+    "fEnd": 756750
+   },
+   {
+    "id": "rival7",
+    "name": "{RIVAL}",
+    "foe": [
+     47,
+     47,
+     46,
+     46,
+     48,
+     51
+    ],
+    "foeMax": 51,
+    "team": [
+     57,
+     49,
+     50,
+     49,
+     49,
+     49
+    ],
+    "badges": 8,
+    "f": 757568,
+    "won": false,
+    "wildSince": 3,
+    "grindSince": 0,
+    "fEnd": 760448
+   },
+   {
+    "id": "rival7",
+    "name": "{RIVAL}",
+    "foe": [
+     47,
+     47,
+     46,
+     46,
+     48,
+     51
+    ],
+    "foeMax": 51,
+    "team": [
+     58,
+     50,
+     50,
+     49,
+     50,
+     50
+    ],
+    "badges": 8,
+    "f": 761266,
+    "won": false,
+    "wildSince": 3,
+    "grindSince": 0,
+    "fEnd": 764737
+   },
+   {
+    "id": "rival7",
+    "name": "{RIVAL}",
+    "foe": [
+     47,
+     47,
+     46,
+     46,
+     48,
+     51
+    ],
+    "foeMax": 51,
+    "team": [
+     58,
+     50,
+     51,
+     50,
+     50,
+     50
+    ],
+    "badges": 8,
+    "f": 765555,
+    "won": false,
+    "wildSince": 3,
+    "grindSince": 0,
+    "fEnd": 768383
+   },
+   {
+    "id": "rival7",
+    "name": "{RIVAL}",
+    "foe": [
+     47,
+     47,
+     46,
+     46,
+     48,
+     51
+    ],
+    "foeMax": 51,
+    "team": [
+     58,
+     51,
+     51,
+     50,
+     50,
+     51
+    ],
+    "badges": 8,
+    "f": 769201,
+    "won": true,
+    "wildSince": 3,
+    "grindSince": 0,
+    "fEnd": 771743
+   },
+   {
+    "id": "e4_1",
+    "name": "THORNE",
+    "foe": [
+     50,
+     51,
+     51,
+     50,
+     53
+    ],
+    "foeMax": 53,
+    "team": [
+     58,
+     52,
+     52,
+     51,
+     51,
+     52
+    ],
+    "badges": 8,
+    "f": 778588,
+    "won": true,
+    "wildSince": 1,
+    "grindSince": 0,
+    "fEnd": 781320
+   },
+   {
+    "id": "e4_2",
+    "name": "WREN",
+    "foe": [
+     50,
+     51,
+     51,
+     52,
+     53
+    ],
+    "foeMax": 53,
+    "team": [
+     59,
+     52,
+     53,
+     52,
+     51,
+     52
+    ],
+    "badges": 8,
+    "f": 781698,
+    "won": false,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 783093
+   },
+   {
+    "id": "e4_2",
+    "name": "WREN",
+    "foe": [
+     50,
+     51,
+     51,
+     52,
+     53
+    ],
+    "foeMax": 53,
+    "team": [
+     59,
+     52,
+     53,
+     52,
+     51,
+     52
+    ],
+    "badges": 8,
+    "f": 784517,
+    "won": false,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 787832
+   },
+   {
+    "id": "e4_2",
+    "name": "WREN",
+    "foe": [
+     50,
+     51,
+     51,
+     52,
+     53
+    ],
+    "foeMax": 53,
+    "team": [
+     59,
+     53,
+     53,
+     52,
+     52,
+     53
+    ],
+    "badges": 8,
+    "f": 788290,
+    "won": true,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 790875
+   },
+   {
+    "id": "e4_3",
+    "name": "MORRIGAN",
+    "foe": [
+     52,
+     52,
+     52,
+     53,
+     55
+    ],
+    "foeMax": 55,
+    "team": [
+     59,
+     53,
+     54,
+     52,
+     52,
+     53
+    ],
+    "badges": 8,
+    "f": 791209,
+    "won": false,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 792271
+   },
+   {
+    "id": "e4_3",
+    "name": "MORRIGAN",
+    "foe": [
+     52,
+     52,
+     52,
+     53,
+     55
+    ],
+    "foeMax": 55,
+    "team": [
+     59,
+     53,
+     54,
+     53,
+     52,
+     53
+    ],
+    "badges": 8,
+    "f": 793399,
+    "won": true,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 794795
+   },
+   {
+    "id": "e4_4",
+    "name": "VESPER",
+    "foe": [
+     53,
+     52,
+     52,
+     54,
+     57
+    ],
+    "foeMax": 57,
+    "team": [
+     60,
+     53,
+     54,
+     53,
+     53,
+     54
+    ],
+    "badges": 8,
+    "f": 795137,
+    "won": false,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 798378
+   },
+   {
+    "id": "e4_4",
+    "name": "VESPER",
+    "foe": [
+     53,
+     52,
+     52,
+     54,
+     57
+    ],
+    "foeMax": 57,
+    "team": [
+     60,
+     54,
+     54,
+     53,
+     53,
+     54
+    ],
+    "badges": 8,
+    "f": 799652,
+    "won": true,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 803909
+   },
+   {
+    "id": "champ",
+    "name": "ELOWEN",
+    "foe": [
+     54,
+     55,
+     55,
+     55,
+     56,
+     59
+    ],
+    "foeMax": 59,
+    "team": [
+     61,
+     54,
+     55,
+     54,
+     54,
+     55
+    ],
+    "badges": 8,
+    "f": 804243,
+    "won": false,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 807192
+   },
+   {
+    "id": "champ",
+    "name": "ELOWEN",
+    "foe": [
+     54,
+     55,
+     55,
+     55,
+     56,
+     59
+    ],
+    "foeMax": 59,
+    "team": [
+     61,
+     55,
+     55,
+     54,
+     54,
+     55
+    ],
+    "badges": 8,
+    "f": 321,
+    "won": false,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 3404
+   },
+   {
+    "id": "champ",
+    "name": "ELOWEN",
+    "foe": [
+     54,
+     55,
+     55,
+     55,
+     56,
+     59
+    ],
+    "foeMax": 59,
+    "team": [
+     61,
+     55,
+     56,
+     55,
+     54,
+     56
+    ],
+    "badges": 8,
+    "f": 4976,
+    "won": true,
+    "wildSince": 0,
+    "grindSince": 0,
+    "fEnd": 8451
+   }
+  ],
+  "wildFought": 229,
+  "grindFought": 77,
+  "whiteouts": 17
+ },
+ "events": [
+  "[f3404] BOSS champ LOST team 61/55/55/54/54/55 vs max 59",
+  "[f3802] SHOP at league: [] money 1477",
+  "[f7506] ENDING SCENE reached",
+  "[f8451] BOSS champ WON team 61/55/56/55/54/56 vs max 59",
+  "[f16843] SHOP at cinder_mart: [[\"hyperpotion\",4]] money 13277"
+ ],
+ "issues": [],
+ "prompts": {
+  "Welcome to the HAVEN! Shall I restore your Wildkin to full health? => YES": 3,
+  "Save your game? => YES": 1,
+  "Give a nickname to SPROUTLE? => NO": 1,
+  "The water is calm. Ride the DRIFTBOARD? => YES": 3,
+  "HYPER POTION, and you want 4? That'll be $6000. OK? => YES": 1,
+  "Shall I revive the Wildkin inside? => YES": 1,
+  "Give a nickname to SPIRALITH? => NO": 1
+ },
+ "trace": [
+  "talk:rivalhome:sign:0,1 c14 len7 -> arrived @rivalhome0,2",
+  "talk:lab:prof c61 len29 -> arrived @lab4,4",
+  "talk:lab:prof c0 len0 -> arrived @lab4,4",
+  "talk:lab:sign:5,4 c0 len0 -> arrived @lab4,4",
+  "talk:lab:aide2 c8 len4 -> arrived @lab1,5",
+  "talk:lab:sign:6,4 c10 len5 -> arrived @lab6,5",
+  "talk:lab:sign:7,4 c2 len1 -> arrived @lab7,5",
+  "talk:lab:aide c8 len4 -> arrived @lab7,9",
+  "talk:lab:sign:8,2 c14 len7 -> arrived @lab8,3",
+  "talk:lab:sign:9,1 c4 len2 -> arrived @lab9,2",
+  "talk:lab:sign:1,2 c18 len9 -> arrived @lab2,2",
+  "talk:lab:sign:0,1 c8 len4 -> arrived @lab0,2",
+  "talk:hearthvale:oldman c53 len26 -> arrived @hearthvale15,14",
+  "talk:rivalhome:june c14 len6 -> arrived @rivalhome4,5",
+  "talk:home:mom c37 len17 -> arrived @home5,5",
+  "talk:route1:helper c57 len28 -> arrived @route17,25",
+  "talk:route1:sign:17,12 c44 len22 -> arrived @route116,12",
+  "talk:route1:jumper c58 len29 -> arrived @route111,4",
+  "talk:cindermoor:sign:12,6 c165 len77 -> action @hearthvale10,14",
+  "talk:cindermoor:sign:12,6 c72 len36 -> scene @route2010,4",
+  "talk:cindermoor:sign:12,6 c58 len29 -> scene @route2011,20",
+  "shop:cinder_mart:clerk c86 len42 -> scene @cindermoor11,1",
+  "shop:cinder_mart:clerk c72 len35 -> scene @cindermoor12,1",
+  "shop:cinder_mart:clerk c70 len34 -> arrived @cinder_mart1,3",
+  "talk:cinder_mart:sign:5,3 c6 len3 -> arrived @cinder_mart4,3",
+  "talk:cinder_mart:sign:5,1 c4 len2 -> arrived @cinder_mart5,2",
+  "talk:cinder_mart:sign:5,5 c8 len4 -> arrived @cinder_mart5,4",
+  "talk:cindermoor:c1 c35 len17 -> arrived @cindermoor13,15",
+  "talk:cinder_house:grandpa c24 len11 -> arrived @cinder_house5,5",
+  "talk:cinder_house:sign:0,1 c16 len8 -> arrived @cinder_house0,2",
+  "talk:cindermoor:c2 c45 len22 -> arrived @cindermoor22,5",
+  "talk:cinder_lab:reviver c26 len12 -> arrived @cinder_lab5,3",
+  "talk:cinder_lab:sci2 c8 len4 -> arrived @cinder_lab2,4",
+  "talk:cinder_lab:sign:2,1 c12 len6 -> arrived @cinder_lab2,2",
+  "talk:cinder_lab:sign:7,1 c10 len5 -> arrived @cinder_lab6,1",
+  "talk:cindermoor:sign:12,6 c31 len15 -> arrived @cindermoor12,7",
+  "talk:cinder_gym:guide c18 len8 -> arrived @cinder_gym7,13",
+  "talk:cinder_gym:sign:6,12 c2 len1 -> arrived @cinder_gym6,13",
+  "talk:cinder_gym:sign:3,12 c6 len3 -> arrived @cinder_gym3,13",
+  "talk:cindermoor:c3 c19 len9 -> arrived @cindermoor4,10",
+  "talk:cinder_haven:keeper c38 len18 -> arrived @cinder_haven4,3",
+  "talk:cinder_haven:sign:9,2 c10 len5 -> arrived @cinder_haven9,3",
+  "talk:cinder_haven:h1 c6 len3 -> arrived @cinder_haven7,4",
+  "talk:caldera:solmara c48 len20 -> scene @caldera9,7",
+  "talk:caldera:solmara c3 len1 -> arrived @caldera9,6",
+  "heal:cinder_haven:keeper c47 len19 -> scene @caldera9,8",
+  "heal:cinder_haven:keeper c41 len17 -> arrived @cinder_haven4,3",
+  "talk:manor1:sign:5,2 c55 len23 -> arrived @manor15,3",
+  "talk:manor2:sign:2,2 c34 len11 -> arrived @manor21,2",
+  "talk:manor2:sign:11,2 c33 len11 -> scene @manor211,3",
+  "talk:manor2:sign:11,2 c0 len0 -> arrived @manor211,3",
+  "talk:cinder_gym:vulk c128 len50 -> scene @manor21,1",
+  "talk:cinder_gym:vulk c92 len38 -> arrived @cinder_gym4,3",
+  "talk:mirecoast:c2 c334 len134 -> action @cindermoor24,7",
+  "talk:mirecoast:c2 c263 len104 -> scene @route1910,4",
+  "talk:mirecoast:c2 c237 len91 -> scene @frost26,12",
+  "talk:mirecoast:c2 c192 len75 -> scene @frost211,5",
+  "talk:mirecoast:c2 c156 len63 -> action @route1923,4",
+  "talk:mirecoast:c2 c86 len43 -> scene @route187,27",
+  "talk:mirecoast:c2 c74 len37 -> scene @route1811,5"
+ ],
+ "texts": [
+  "So you are the one who chased the HOLLOW ORDER out of every corner of VARROW. / I am ELOWEN, CHAMPION of the SUMMIT. Give me everything you have.",
+  "REN has no more usable Wildkin!",
+  "REN panicked and dropped $1477... REN blacked out!",
+  "Your Wildkin were brought back to the HAVEN and fully restored.",
+  "Welcome to the HAVEN! Shall I restore your Wildkin to full health?",
+  "Okay, I'll take your Wildkin for a moment.",
+  "Your Wildkin are fully rested. Come back anytime!",
+  "Final supplies before the ELITE FOUR!",
+  "Thank you! Please come again!",
+  "Beyond these stairs wait the ELITE FOUR and the CHAMPION. / Once you go up, there is no turning back until you win, or fall.",
+  "THORNE: Go. The next door is open.",
+  "WREN: Fly on, then.",
+  "MORRIGAN: Go on. VESPER will not be so gentle.",
+  "ELOWEN: You and your Wildkin fought as one. / That is the heart of a true CHAMPION. / ELOWEN: From this day, your name is carved into the SUMMIT, REN.",
+  "PROF. FENN: REN! I climbed all the way up the mountain! / You did it! I'm so proud of you.",
+  "VEX: Heh. Guess I'll just have to become CHAMPION after you. / Congrats, REN.",
+  "MOM: Welcome home, CHAMPION! Tell me everything! / ...But rest first. Your Wildkin are all healed up.",
+  "Save your game?",
+  "REN saved the game!",
+  "Your adventure continues! / The storms around the RIFT north of DRIFTWOOD CAPE have calmed. / Complete the WILDEX, and challenge the LEAGUE again anytime.",
+  "MOM: Oh, you look worn out! Take a little rest.",
+  "MOM: My child, the CHAMPION! I'm so proud of you!",
+  "A show about a young trainer crossing a vast desert with a Wildkin. / Gripping stuff!",
+  "A shelf of comics about heroic Wildkin.",
+  "MOM's cookbooks. One is titled '101 Snacks Wildkin Love'.",
+  "HEARTHVALE: Where every journey starts warm.",
+  "PROF. FENN'S WILDKIN LAB",
+  "Ah, you have a partner now! / The sea to the south leads to CINDERMOOR, if you ever find a way to cross it.",
+  "VEX's house",
+  "JUNE: Grandma says every Wildkin has a story. / I hope you find lots of them!",
+  "Shelves of travel guides and old Wildkin almanacs.",
+  "PROF. FENN: Eight badges! / You deserve the last Wildkin from my lab. / It has been waiting so patiently.",
+  "REN received SPROUTLE!",
+  "Give a nickname to SPROUTLE?",
+  "SPROUTLE was sent to the LINK TERMINAL storage.",
+  "PROF. FENN: CHAMPION REN! Your WILDEX has 51 entries. / Can you find all 151?",
+  "This pod is empty now.",
+  "Weaken wild Wildkin before you throw a pod. / Status problems help too!",
+  "PROF. FENN's last Wildkin rests in this pod. It looks content.",
+  "I am an aide to PROF. FENN. / She was the one who first charted all fifteen Wildkin types!",
+  "A machine that analyzes Wildkin DNA. It beeps cheerfully.",
+  "Research notes: 'Some Wildkin evolve only when they touch a special shard.'",
+  "A humming research machine. Its screen shows a map of VARROW.",
+  "Research notes: 'FLAME beats LEAF. LEAF beats TIDE. TIDE beats FLAME.'",
+  "ROUTE 1 North: THICKET WOODS South: HEARTHVALE",
+  "You can hop down ledges, but you can never climb back up them!",
+  "The water is calm. Ride the DRIFTBOARD?",
+  "Welcome to the MARKET! How can I help?",
+  "HYPER POTION, and you want 4? That'll be $6000. OK?",
+  "Here you are! Thank you!",
+  "Bottles of POTION in every size.",
+  "Neatly stacked boxes of CAPTURE PODS.",
+  "A display of hiking gear.",
+  "VULK locked the GYM and lost the key in the old MANOR fire. / Typical VULK!",
+  "Wildkin grow fastest when they battle often. / That candy was just a little push!",
+  "The LAB can revive Wildkin from fossils. Bring any you find!",
+  "SCIENTIST: Oh! That is a SPIRAL FOSSIL! / Shall I revive the Wildkin inside?",
+  "SCIENTIST: Into the machine it goes... whirr... clunk... ding!",
+  "REN received SPIRALITH!",
+  "Give a nickname to SPIRALITH?",
+  "SPIRALITH was sent to the LINK TERMINAL storage.",
+  "We study the RIFT here. / Old records say a Wildkin from before all others sleeps beyond it.",
+  "A FOSSIL REVIVER. Its glass tank bubbles quietly.",
+  "A machine humming with readings from the northern sea.",
+  "CINDERMOOR ISLAND: Forged in fire, tempered by the sea.",
+  "VULK's FLAME team can't stand TIDE, EARTH and STONE moves. / LEAF and FROST moves will barely tickle them!",
+  "CINDERMOOR GYM LEADER: VULK The flame that never dies!",
+  "The EMBER CALDERA in the volcano is where the dawn phoenix is said to nest. / Only fools go in. Fools and trainers.",
+  "REN booted up the LINK TERMINAL.",
+  "VULK says FLAME types are weak to TIDE, EARTH and STONE. / He says it like it is a secret.",
+  "Krrraaaah! A wave of heat rolls over you! / The dawn phoenix spreads its wings!",
+  "SOLMARA soared up out of the caldera! / It might come back if you return later.",
+  "A charred journal: 'The RIFT is not a place. It is a door. / And something is knocking.'",
+  "A journal: 'Day 61. / The creature from the RIFT spoke to me without words. It is lonely. / It wants out.'",
+  "A journal: 'Day 90. I sealed the notes away. / If the HOLLOW ORDER finds them, they will try to wake it.'",
+  "VULK: Your fire burns bright! / Keep it lit, no matter how hard the wind blows."
+ ],
+ "pageErrors": []
+}

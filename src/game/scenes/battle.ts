@@ -20,11 +20,12 @@ import {
   fighter,
   goesFirst,
   hits,
+  pickNextFoe,
   runChance,
   usableMoves,
   type Fighter,
 } from '../systems/battlecalc';
-import { addExp, evolutionFor, expFor, expReward, isAlive, maxHp, monName, restorePP, stats, type Mon } from '../systems/mon';
+import { addExp, catchUpShare, evolutionFor, expFor, expReward, isAlive, maxHp, monName, restorePP, stats, type Mon } from '../systems/mon';
 import { markCaught, markSeen, receiveMon, removeItem } from '../systems/state';
 import { drawMoreArrow, drawTextBox, fmt, TB_Y } from './dialog';
 import { EvolutionScene } from './evolution';
@@ -442,7 +443,7 @@ export class BattleScene extends Modal<BattleResult> {
     await this.msg(`${this.name(this.foe)} fainted!`);
     await this.giveExp();
     if (this.o.kind === 'trainer') {
-      const next = this.o.party.findIndex(isAlive);
+      const next = pickNextFoe(this.g.rng, this.o.party, this.me, !!this.o.trainer?.smart);
       if (next >= 0) {
         this.foeIdx = next;
         this.foe = fighter(this.o.party[next]);
@@ -505,19 +506,28 @@ export class BattleScene extends Modal<BattleResult> {
 
   // ---------- experience ----------
 
+  /**
+   * Wildkin that fought split the exp evenly. Bench Wildkin get a small
+   * catch-up share only while they trail the team's strongest (25% at 3+
+   * levels behind, 50% at 6+), so they can be raised without the whole team
+   * running ahead of the story.
+   */
   private async giveExp() {
     const s = this.s;
-    const base = expReward(this.foe.mon, this.o.kind === 'trainer');
+    const trainer = this.o.kind === 'trainer';
     const part = s.party.filter((m) => isAlive(m) && this.participants.has(m.uid));
     const rest = s.party.filter((m) => isAlive(m) && !this.participants.has(m.uid));
+    const top = Math.max(0, ...s.party.map((m) => m.lvl));
+    const behind = rest.filter((m) => catchUpShare(m.lvl, top) > 0);
+    const shares = behind.map((m) => Math.max(1, Math.floor(expReward(this.foe.mon, trainer, m.lvl) * catchUpShare(m.lvl, top))));
     for (const m of part) {
-      await this.msg(`${monName(m)} gained ${base} EXP. Points!`);
-      await this.applyExp(m, base);
+      const amount = Math.max(1, Math.floor(expReward(this.foe.mon, trainer, m.lvl) / part.length));
+      await this.msg(`${monName(m)} gained ${amount} EXP. Points!`);
+      await this.applyExp(m, amount);
     }
-    if (rest.length) {
-      const half = Math.max(1, Math.floor(base / 2));
-      await this.info(`The rest of the team gained ${half} EXP. Points!`);
-      for (const m of rest) await this.applyExp(m, half);
+    if (behind.length) {
+      await this.info(behind.length === 1 ? `${monName(behind[0])} learned from watching and gained ${shares[0]} EXP.` : 'Team members who are behind learned from watching and gained some EXP.');
+      for (let k = 0; k < behind.length; k++) await this.applyExp(behind[k], shares[k]);
     }
   }
 

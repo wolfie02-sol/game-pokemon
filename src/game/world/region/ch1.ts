@@ -384,7 +384,7 @@ export function build(W: World) {
       border: 'tree',
       music: 'route',
       outdoor: true,
-      encounters: enc(0.1, 'Fluffin 4-6 30, Nibbit 4-6 30, Pecklet 4-6 25, Larvule 4-5 8, Thornet 4-5 7'),
+      encounters: enc(0.1, 'Fluffin 4-6 28, Nibbit 4-6 27, Pecklet 4-6 22, Budling 4-6 9, Larvule 4-5 7, Thornet 4-5 7'),
       rows: [
         'TTTTTTTTT..TTTTTTTTT',
         'TT.......::.....MMTT',
@@ -560,7 +560,7 @@ export function build(W: World) {
           y: 2,
           dir: 'down',
           look: 'garrick',
-          trainer: T('g1', 'LEADER', 'GARRICK', [['Pebbit', 12], ['Armadil', 14]], {
+          trainer: T('g1', 'LEADER', 'GARRICK', [['Pebbit', 10], ['Armadil', 11]], {
             look: 'garrick',
             money: 99,
             smart: true,

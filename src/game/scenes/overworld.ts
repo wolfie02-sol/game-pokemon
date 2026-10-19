@@ -10,6 +10,8 @@ import { Scene } from '../core/scene';
 import { item as itemDef } from '../data/items';
 import { speciesByName } from '../data/species';
 import { TRAINERS, trainerTeam } from '../data/trainers';
+import { bossMoveset } from '../data/bossmoves';
+import { move as moveDef } from '../data/moves';
 import { healMon, isAlive, maxHp, monName } from '../systems/mon';
 import { addItem, anyAlive, markCaught, newMon, receiveMon, type GameState } from '../systems/state';
 import { allMaps, getMap } from '../world/maps';
@@ -936,7 +938,15 @@ export class Overworld extends Scene {
       },
       async battle(id) {
         const t = TRAINERS[id];
-        const team = trainerTeam(t, s).map(([sp, lvl]) => newMon(s, sp, lvl, g.rng, t.name));
+        const team = trainerTeam(t, s).map(([sp, lvl]) => {
+          const m = newMon(s, sp, lvl, g.rng, t.name);
+          // bosses bring considered, legal move sets (league members also know TM moves)
+          if (t.smart) {
+            const set = bossMoveset(sp, lvl, /^champ$/.test(t.id));
+            if (set) m.moves = set.map((mid) => ({ id: mid, pp: moveDef(mid).pp }));
+          }
+          return m;
+        });
         await battleTransition(g, true);
         const res: BattleResult = await g.open(new BattleScene(g, { kind: 'trainer', trainer: t, party: team, canLose: id === 'rival1' }));
         if (res === 'lose') {

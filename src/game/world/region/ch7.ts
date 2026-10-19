@@ -197,7 +197,7 @@ export function build(W: World) {
           y: 2,
           dir: 'down',
           look: 'isolde',
-          trainer: T('g8', 'LEADER', 'ISOLDE', [['Glacieal', 46], ['Frostwaltz', 46], ['Dozelord', 47], ['Pearlfort', 48], ['Glidelyn', 50]], {
+          trainer: T('g8', 'LEADER', 'ISOLDE', [['Glacieal', 45], ['Frostwaltz', 46], ['Dozelord', 46], ['Pearlfort', 47], ['Glidelyn', 49]], {
             look: 'isolde',
             money: 99,
             smart: true,
@@ -491,7 +491,7 @@ export function build(W: World) {
       ],
     });
 
-  T('e4_1', 'ELITE FOUR', 'THORNE', [['Bulwfrog', 53], ['Jabster', 55], ['Kickwell', 55], ['Furyape', 54], ['Titanox', 58]], {
+  T('e4_1', 'ELITE FOUR', 'THORNE', [['Bulwfrog', 50], ['Jabster', 51], ['Kickwell', 51], ['Furyape', 50], ['Titanox', 53]], {
     look: 'thorne',
     money: 99,
     smart: true,
@@ -501,7 +501,7 @@ export function build(W: World) {
     lose: 'A crushing defeat. You have earned your way forward.',
     after: '',
   });
-  T('e4_2', 'ELITE FOUR', 'WREN', [['Galesprint', 54], ['Lancebeak', 55], ['Nocturne', 55], ['Pterolith', 57], ['Tempestrel', 58]], {
+  T('e4_2', 'ELITE FOUR', 'WREN', [['Galesprint', 50], ['Lancebeak', 51], ['Nocturne', 51], ['Pterolith', 52], ['Tempestrel', 53]], {
     look: 'wren',
     money: 99,
     smart: true,
@@ -511,7 +511,7 @@ export function build(W: World) {
     lose: 'Grounded at last. The sky is yours to cross.',
     after: '',
   });
-  T('e4_3', 'ELITE FOUR', 'MORRIGAN', [['Duskwraith', 56], ['Nocturne', 56], ['Phantail', 55], ['Venomaw', 58], ['Duskwraith', 60]], {
+  T('e4_3', 'ELITE FOUR', 'MORRIGAN', [['Duskwraith', 52], ['Nocturne', 52], ['Phantail', 52], ['Venomaw', 53], ['Duskwraith', 55]], {
     look: 'morrigan',
     money: 99,
     smart: true,
@@ -521,7 +521,7 @@ export function build(W: World) {
     lose: 'Hmph. You have more spirit than I expected.',
     after: '',
   });
-  T('e4_4', 'ELITE FOUR', 'VESPER', [['Swamplash', 58], ['Dragonet', 56], ['Dragonet', 56], ['Pterolith', 60], ['Skywyrm', 62]], {
+  T('e4_4', 'ELITE FOUR', 'VESPER', [['Swamplash', 52], ['Dragonet', 51], ['Dragonet', 51], ['Pterolith', 53], ['Skywyrm', 56]], {
     look: 'vesper',
     money: 99,
     smart: true,
@@ -531,7 +531,7 @@ export function build(W: World) {
     lose: 'Remarkable. The CHAMPION awaits beyond this door.',
     after: '',
   });
-  T('champ', 'CHAMPION', 'ELOWEN', [['Tempestrel', 61], ['Oracleon', 61], ['Megalith', 62], ['Rafflare', 61], ['Medusail', 62], ['Pyrehound', 65]], {
+  T('champ', 'CHAMPION', 'ELOWEN', [['Tempestrel', 54], ['Oracleon', 54], ['Megalith', 54], ['Rafflare', 55], ['Medusail', 55], ['Pyrehound', 58]], {
     look: 'elowen',
     money: 200,
     smart: true,

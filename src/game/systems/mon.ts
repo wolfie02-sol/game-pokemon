@@ -33,9 +33,10 @@ export interface Stats {
 
 export const MAX_LEVEL = 100;
 
+/** Exp needed to reach a level: the classic "medium fast" curve, level cubed. */
 export function expFor(lvl: number): number {
   if (lvl <= 1) return 0;
-  return Math.floor(0.8 * lvl * lvl * lvl);
+  return lvl * lvl * lvl;
 }
 
 export function stats(m: Mon): Stats {
@@ -113,9 +114,44 @@ export function isAlive(m: Mon): boolean {
 }
 
 /** Experience gained for defeating `foe`. */
-export function expReward(foe: Mon, trainer: boolean): number {
+/**
+ * Experience for knocking out `foe`, as earned by a Wildkin of level
+ * `receiver`. Classic base (yield x level / 7, x1.5 from trainers) scaled by
+ * the level gap: foes more than 5 levels below the receiver give less (half its level: about 60-75%,
+ * a quarter of it: about 30%, never under 25%),
+ * foes above give up to 1.5x, so grinding weak Wildkin stops paying and
+ * under-levelled team members catch up.
+ */
+/**
+ * Basic-stage Wildkin have generous exp yields compared with the classics
+ * (about 1.7x), and early routes are full of them, which is what pushed teams
+ * far past the early gyms. Their yield is trimmed here; final stages are unchanged.
+ */
+const STAGE_YIELD = [0.6, 0.82, 1];
+
+export function expReward(foe: Mon, trainer: boolean, receiver = foe.lvl): number {
   const s = species(foe.sp);
-  return Math.max(1, Math.floor(((s.expYield * foe.lvl) / 5) * (trainer ? 1.5 : 1)));
+  const base = ((s.expYield * (STAGE_YIELD[s.stage] ?? 1) * foe.lvl) / 7) * (trainer ? 1.5 : 1);
+  // the first 5 levels of difference are free, so training a few levels above the local Wildkin stays reasonable
+  const eff = receiver > foe.lvl ? Math.max(foe.lvl, receiver - 5) : receiver;
+  const gap = ((2 * foe.lvl + 10) / (foe.lvl + eff + 10)) ** 2;
+  return Math.max(1, Math.floor(base * Math.min(1.5, Math.max(0.25, gap))));
+}
+
+/** Bench Wildkin at least this many levels below the team's strongest get a catch-up share. */
+export const CATCH_UP_GAP = 3;
+/** Fraction of a knockout's exp a lagging bench Wildkin receives... */
+export const CATCH_UP_SHARE = 0.25;
+/** ...or this much once it trails by FAR_BEHIND levels or more, so new or neglected members can rejoin. */
+export const CATCH_UP_FAR_SHARE = 0.5;
+export const FAR_BEHIND = 6;
+
+/** The catch-up fraction for a bench Wildkin of level `lvl` when the team's strongest is `top` (0 = none). */
+export function catchUpShare(lvl: number, top: number): number {
+  const gap = top - lvl;
+  if (gap >= FAR_BEHIND) return CATCH_UP_FAR_SHARE;
+  if (gap >= CATCH_UP_GAP) return CATCH_UP_SHARE;
+  return 0;
 }
 
 export interface LevelEvent {

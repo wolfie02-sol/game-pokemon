@@ -34,11 +34,12 @@ async function boot(continueSave) {
   }
   await page.addScriptTag({ content: botSrc });
   await page.evaluate(
-    ([c, starter]) => {
+    ([c, starter, policy]) => {
       window.__bot.opts.continue = c;
       if (starter) window.__bot.opts.starter = starter;
+      window.__bot.opts.policy = policy;
     },
-    [continueSave, opt('starter', 'EMBERKIT')],
+    [continueSave, opt('starter', 'EMBERKIT'), opt('policy', 'all')],
   );
 }
 
@@ -50,6 +51,7 @@ const say = (t) => {
 await boot(cont);
 let total = 0;
 let lastBadges = -1;
+let bossSeen = 0;
 let lastSum = null;
 const t0 = Date.now();
 while (total < maxFrames) {
@@ -74,6 +76,8 @@ while (total < maxFrames) {
   lastSum = sum;
   const mins = ((Date.now() - t0) / 60000).toFixed(1);
   say(`${mins}m f=${sum.frames} ${sum.scene} ${sum.map}${JSON.stringify(sum.pos)} badges=${sum.badges.length} party=${sum.party.join(' ')} $${sum.money} dex=${sum.caught}/${sum.seen} goal=${sum.goal && sum.goal.type + ':' + sum.goal.key} idle=${sum.sinceProgress} issues=${sum.issues} W${sum.battles.won}`);
+  for (const b of (sum.bossLog || []).slice(bossSeen)) say(`   BOSS ${b.id} b${b.badges} foe ${b.foe.join('/')} team ${b.team.join('/')} ${b.won ? 'WON' : 'LOST'} wild+${b.wildSince} grind+${b.grindSince}`);
+  bossSeen = (sum.bossLog || []).length;
   if (sum.badges.length !== lastBadges) {
     lastBadges = sum.badges.length;
     await page.locator('canvas').first().screenshot({ path: path.join(out, `badge${lastBadges}.png`) });
@@ -84,6 +88,15 @@ while (total < maxFrames) {
     fs.writeFileSync(path.join(out, 'bot.json'), JSON.stringify({ summary: lastSum, ...dump, pageErrors }, null, 1));
   }
   if (sum.done) break;
+  if (opt('stop', '') === 'champion' && sum.champion) {
+    say('Reached CHAMPION, stopping as asked');
+    break;
+  }
+  const bm = /^badges(\d)$/.exec(opt('stop', ''));
+  if (bm && (sum.badges?.length ?? 0) >= Number(bm[1])) {
+    say(`Reached ${bm[1]} badge(s), stopping as asked`);
+    break;
+  }
   if (sum.sinceProgress > 4_000_000) {
     say('NO PROGRESS for 4M frames, stopping');
     break;

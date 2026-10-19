@@ -1,0 +1,198 @@
+0.0m f=30138 TextScene route1[3,28] badges=0 party=Emberkit:5:13 $3100 dex=1/2 goal=talk:route1:item:r1pod idle=1588 issues=0 W0
+0.1m f=61937 BattleTransition woods[10,18] badges=0 party=Emberkit:6:22 Nibbit:5:18 Cocoonix:4:18 Larvule:4:18 Zapling:5:18 $1690 dex=5/8 goal=talk:woods:bug3 idle=28851 issues=0 W0
+0.2m f=91937 BattleScene brindle_gym[1,7] badges=0 party=Emberkit:8:0 Nibbit:5:18 Cocoonix:6:23 Cocoonix:7:0 Zapling:6:20 Thornet:6:0 $1185 dex=6/13 goal=talk:brindle_gym:gt1 idle=58851 issues=0 W0
+0.3m f=121937 BattleScene woods[13,6] badges=0 party=Emberkit:11:15 Nibbit:7:21 Cocoonix:7:25 Cocoonix:7:24 Zapling:7:22 Hivecap:7:24 $1605 dex=8/13 goal=grind:grind:woods idle=88851 issues=0 W0
+0.4m f=152702 TextScene brindle_gym[4,3] badges=0 party=Emberkit:13:36 Nibbit:8:23 Cocoonix:8:27 Cocoonix:8:26 Zapling:8:23 Hivecap:8:27 $1605 dex=8/13 goal=talk:brindle_gym:garrick idle=119616 issues=0 W0
+0.5m f=182702 BattleTransition caveb1[17,3] badges=1 party=Emberkit:15:16 Nibbit:11:28 Glimmoth:10:33 Glimmoth:10:33 Zapling:10:27 Vespire:10:35 $2793 dex=14/22 goal=heal:riverton_haven:keeper idle=14184 issues=0 W0
+   BOSS g1 b0 foe 10/12 team 13/8/8/8/8/8 WON wild+88 grind+77
+0.6m f=212809 TextScene volthaven[13,12] badges=1 party=Blazelynx:18:50 Nibbit:13:31 Glimmoth:13:40 Glimmoth:14:42 Zapling:13:32 Vespire:13:43 $2348 dex=15/30 goal=talk:volthaven:kid idle=1020 issues=0 W0
+   BOSS rival3 b1 foe 17/15/16/18 team 16/11/11/11/11/11 WON wild+7 grind+0
+0.7m f=242809 BattleScene route5[9,11] badges=2 party=Blazelynx:21:60 Nibbit:15:34 Glimmoth:16:48 Glimmoth:16:47 Zapling:15:35 Vespire:16:50 $4368 dex=15/39 goal=talk:route5:t3 idle=3606 issues=0 W0
+   BOSS g2 b1 foe 17/17/18/20 team 21/15/15/15/15/15 WON wild+0 grind+0
+0.8m f=273173 TextScene volthaven_mart[1,3] badges=2 party=Blazelynx:24:67 Nibbit:17:37 Glimmoth:18:52 Glimmoth:18:51 Zapling:17:39 Vespire:18:55 $9058 dex=15/42 goal=talk:volthaven_mart:clerk idle=4713 issues=0 W0
+   BOSS cv_sable b2 foe 12/13/14 team 21/16/16/16/16/16 WON wild+2 grind+0
+0.9m f=303250 TextScene route10[2,22] badges=2 party=Blazelynx:27:51 Gnawlord:20:52 Glimmoth:21:59 Glimmoth:21:58 Zapling:20:44 Vespire:21:63 $14198 dex=16/48 goal=talk:route10:t3 idle=20303 issues=0 W0
+   BOSS rival4 b2 foe 20/19/19/22 team 24/17/18/18/17/18 WON wild+1 grind+0
+1.0m f=333645 TextScene brindle_museum[7,6] badges=3 party=Blazelynx:29:70 Gnawlord:22:57 Glimmoth:22:62 Glimmoth:22:61 Zapling:22:47 Vespire:22:65 $11193 dex=20/52 goal=talk:brindle_museum:curator idle=4880 issues=0 W0
+   BOSS g3 b2 foe 21/22/22/25 team 27/21/21/21/21/21 WON wild+3 grind+0
+1.1m f=363645 Overworld tower1[4,7] badges=3 party=Blazelynx:29:0 Gnawlord:24:17 Glimmoth:23:64 Glimmoth:23:0 Zapling:23:49 Vespire:23:0 $15778 dex=22/54 goal=goto:tower1:trig:0 idle=34880 issues=0 W0
+   BOSS rival5 b3 foe 27/25/26/26/29 team 29/23/23/23/23/22 WON wild+17 grind+0
+1.2m f=393706 Overworld bloomfield[22,14] badges=3 party=Blazelynx:32:86 Gnawlord:26:65 Glimmoth:26:71 Glimmoth:26:70 Stormane:26:67 Vespire:25:73 $17398 dex=24/61 goal=talk:bloomfield:c1 idle=24124 issues=0 W0
+1.3m f=423706 BattleScene route17[8,30] badges=4 party=Blazelynx:35:59 Gnawlord:29:72 Glimmoth:28:76 Glimmoth:28:74 Stormane:28:72 Vespire:28:81 $28163 dex=26/67 goal=shop:mire_mart:clerk idle=12319 issues=0 W0
+   BOSS g4 b3 foe 27/27/29/30 team 33/27/27/27/27/26 WON wild+7 grind+0
+1.4m f=453820 TextScene astra[26,12] badges=4 party=Pyrolion:37:115 Gnawlord:30:74 Glimmoth:30:81 Glimmoth:30:79 Stormane:30:76 Vespire:30:86 $21833 dex=29/72 goal=goto:astra:trig:2 idle=5265 issues=0 W0
+   BOSS hd_corvin b4 foe 29/30/31 team 36/30/30/30/30/30 WON wild+1 grind+0
+1.5m f=483881 TextScene mire_house[0,2] badges=4 party=Pyrolion:40:123 Gnawlord:33:80 Glimmoth:32:86 Glimmoth:33:86 Stormane:32:81 Vespire:32:91 $23463 dex=30/76 goal=talk:mire_house:sign:0,1 idle=19196 issues=0 W0
+   BOSS tw_sable b4 foe 29/30/31 team 37/31/30/30/30/30 WON wild+1 grind+0
+1.7m f=513937 TextScene route22[12,10] badges=4 party=Pyrolion:42:129 Gnawlord:35:84 Glimmoth:35:93 Glimmoth:35:91 Stormane:35:87 Vespire:35:98 $18988 dex=33/82 goal=talk:route22:sign:13,10 idle=5111 issues=0 W0
+   BOSS dojo_master b4 foe 34/34/35 team 40/33/33/33/33/33 WON wild+6 grind+0
+1.8m f=544059 TextScene obs2[10,6] badges=5 party=Pyrolion:47:143 Gnawlord:39:93 Glimmoth:39:102 Glimmoth:39:100 Stormane:39:96 Vespire:39:109 $39562 dex=35/93 goal=talk:obs2:glidelyn idle=3034 issues=0 W0
+   BOSS rival6 b4 foe 34/32/32/33/35 team 43/36/36/36/36/36 WON wild+1 grind+0
+   BOSS ob_corvin b4 foe 31/31/32 team 45/37/37/37/37/37 WON wild+0 grind+0
+   BOSS ob_nyx b4 foe 33/34/34/36 team 45/37/37/37/37/37 WON wild+0 grind+0
+   BOSS g6 b4 foe 33/33/34/34/36 team 46/38/38/38/38/38 WON wild+0 grind+0
+1.9m f=574636 TextScene mire_haven[4,3] badges=6 party=Pyrolion:48:119 Gnawlord:40:95 Glimmoth:40:105 Glimmoth:40:102 Stormane:40:98 Vespire:40:111 $33172 dex=36/95 goal=talk:mire_haven:keeper idle=630 issues=0 W0
+   BOSS g5 b5 foe 36/37/38/38/40 team 47/39/39/39/39/39 WON wild+2 grind+0
+2.0m f=604636 BattleScene route20[20,10] badges=6 party=Pyrolion:50:69 Gnawlord:41:77 Glimmoth:41:107 Glimmoth:41:105 Stormane:42:103 Vespire:40:0 $35927 dex=41/104 goal=talk:route20:s2 idle=11163 issues=0 W0
+2.2m f=634636 BattleScene caldera[9,6] badges=7 party=Pyrolion:53:54 Gnawlord:43:102 Glimmoth:43:112 Glimmoth:43:109 Stormane:44:107 Vespire:42:116 $31347 dex=46/112 goal=talk:caldera:solmara idle=3759 issues=0 W0
+   BOSS g7 b6 foe 41/42/42/43/45 team 53/43/43/43/43/41 WON wild+35 grind+0
+2.3m f=664712 TextScene obs3[9,4] badges=7 party=Pyrolion:54:163 Gnawlord:43:102 Glimmoth:43:112 Glimmoth:44:112 Stormane:44:107 Vespire:42:116 $16647 dex=48/112 goal=talk:obs3:director idle=33835 issues=0 W0
+2.5m f=696764 TextScene route6[19,1] badges=7 party=Pyrolion:54:163 Gnawlord:44:104 Glimmoth:44:114 Glimmoth:44:112 Stormane:45:109 Vespire:43:119 $17602 dex=48/113 goal=talk:route25:a1 idle=65887 issues=0 W0
+2.6m f=726948 TextScene gale_mart[1,3] badges=8 party=Pyrolion:55:166 Gnawlord:46:108 Glimmoth:46:119 Glimmoth:46:116 Stormane:46:112 Vespire:45:124 $31303 dex=48/116 goal=shop:gale_mart:clerk idle=1208 issues=0 W0
+   BOSS g8 b7 foe 45/46/46/47/49 team 55/45/45/45/46/44 WON wild+41 grind+0
+2.6m f=757497 TextScene route23[9,6] badges=8 party=Pyrolion:57:171 Gnawlord:49:114 Glimmoth:50:129 Glimmoth:49:123 Stormane:49:118 Vespire:49:134 $436 dex=50/123 goal=talk:vcave1:item:vc1b idle=31757 issues=0 W0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 56/47/47/47/47/45 LOST wild+0 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 56/47/48/48/48/47 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 56/47/48/48/48/47 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 56/48/48/48/48/47 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 57/48/49/48/48/48 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 57/49/49/49/49/49 LOST wild+3 grind+0
+2.7m f=787498 BattleScene e4_2[4,6] badges=8 party=Pyrolion:59:0 Gnawlord:53:0 Glimmoth:53:136 Glimmoth:52:0 Stormane:52:0 Vespire:53:0 $3441 dex=50/124 goal=talk:e4_2:wren idle=6163 issues=0 W0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 57/49/50/49/49/49 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 58/50/50/49/50/50 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 58/50/51/50/50/50 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 58/51/51/50/50/51 WON wild+3 grind+0
+   BOSS e4_1 b8 foe 50/51/51/50/53 team 58/52/52/51/51/52 WON wild+1 grind+0
+   BOSS e4_2 b8 foe 50/51/51/52/53 team 59/52/53/52/51/52 LOST wild+0 grind+0
+2.8m f=817499 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=13575 issues=0 W0
+   BOSS e4_2 b8 foe 50/51/51/52/53 team 59/52/53/52/51/52 LOST wild+0 grind+0
+   BOSS e4_2 b8 foe 50/51/51/52/53 team 59/53/53/52/52/53 WON wild+0 grind+0
+   BOSS e4_3 b8 foe 52/52/52/53/55 team 59/53/54/52/52/53 LOST wild+0 grind+0
+   BOSS e4_3 b8 foe 52/52/52/53/55 team 59/53/54/53/52/53 WON wild+0 grind+0
+   BOSS e4_4 b8 foe 53/52/52/54/57 team 60/53/54/53/53/54 LOST wild+0 grind+0
+   BOSS e4_4 b8 foe 53/52/52/54/57 team 60/54/54/53/53/54 WON wild+0 grind+0
+   BOSS champ b8 foe 54/55/55/55/56/59 team 61/54/55/54/54/55 LOST wild+0 grind+0
+3.0m f=847501 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=43577 issues=0 W0
+3.3m f=877503 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=73579 issues=0 W0
+3.5m f=907505 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=103581 issues=0 W0
+3.7m f=937507 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=133583 issues=0 W0
+3.9m f=967509 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=163585 issues=0 W0
+4.1m f=997511 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=193587 issues=0 W0
+4.3m f=1027513 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=223589 issues=0 W0
+4.5m f=1057515 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=253591 issues=0 W0
+4.7m f=1087517 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=283593 issues=0 W0
+4.9m f=1117519 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=313595 issues=0 W0
+5.1m f=1147521 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=343597 issues=0 W0
+5.2m f=1177523 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=373599 issues=0 W0
+5.4m f=1207526 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=403602 issues=0 W0
+5.6m f=1237528 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=433604 issues=0 W0
+5.8m f=1267530 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=463606 issues=0 W0
+6.0m f=1297532 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=493608 issues=0 W0
+6.2m f=1327534 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=523610 issues=0 W0
+6.4m f=1357536 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=553612 issues=0 W0
+6.6m f=1387538 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=583614 issues=0 W0
+6.8m f=1417540 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=613616 issues=0 W0
+7.0m f=1447542 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=643618 issues=0 W0
+7.2m f=1477544 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=673620 issues=0 W0
+7.4m f=1507546 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=703622 issues=0 W0
+7.6m f=1537548 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=733624 issues=0 W0
+7.8m f=1567551 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=763627 issues=0 W0
+8.0m f=1597553 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=793629 issues=0 W0
+8.2m f=1627555 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=823631 issues=0 W0
+8.4m f=1657557 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=853633 issues=0 W0
+8.5m f=1687559 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=883635 issues=0 W0
+8.7m f=1717561 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=913637 issues=0 W0
+8.9m f=1747563 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=943639 issues=0 W0
+9.1m f=1777565 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=973641 issues=0 W0
+9.3m f=1807567 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1003643 issues=0 W0
+9.5m f=1837569 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1033645 issues=0 W0
+9.7m f=1867571 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1063647 issues=0 W0
+9.9m f=1897573 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1093649 issues=0 W0
+10.1m f=1927575 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1123651 issues=0 W0
+10.3m f=1957578 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1153654 issues=0 W0
+10.5m f=1987580 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1183656 issues=0 W0
+10.7m f=2017582 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1213658 issues=0 W0
+10.9m f=2047584 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1243660 issues=0 W0
+11.1m f=2077586 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1273662 issues=0 W0
+11.3m f=2107588 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1303664 issues=0 W0
+11.5m f=2137590 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1333666 issues=0 W0
+11.7m f=2167592 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1363668 issues=0 W0
+11.9m f=2197594 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1393670 issues=0 W0
+12.1m f=2227596 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1423672 issues=0 W0
+12.3m f=2257598 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1453674 issues=0 W0
+12.5m f=2287600 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1483676 issues=0 W0
+12.7m f=2317602 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1513678 issues=0 W0
+12.9m f=2347605 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1543681 issues=0 W0
+13.1m f=2377607 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1573683 issues=0 W0
+13.3m f=2407609 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1603685 issues=0 W0
+13.6m f=2437611 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1633687 issues=0 W0
+13.8m f=2467613 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1663689 issues=0 W0
+14.0m f=2497615 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1693691 issues=0 W0
+14.2m f=2527617 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1723693 issues=0 W0
+14.4m f=2557619 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1753695 issues=0 W0
+14.6m f=2587621 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1783697 issues=0 W0
+14.8m f=2617623 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1813699 issues=0 W0
+15.0m f=2647625 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1843701 issues=0 W0
+15.3m f=2677627 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1873703 issues=0 W0
+15.5m f=2707630 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1903706 issues=0 W0
+15.7m f=2737632 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1933708 issues=0 W0
+15.9m f=2767634 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1963710 issues=0 W0
+16.1m f=2797636 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=1993712 issues=0 W0
+16.4m f=2827638 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2023714 issues=0 W0
+16.6m f=2857640 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2053716 issues=0 W0
+16.9m f=2887642 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2083718 issues=0 W0
+17.1m f=2917644 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2113720 issues=0 W0
+17.3m f=2947646 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2143722 issues=0 W0
+17.6m f=2977648 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2173724 issues=0 W0
+17.8m f=3007650 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2203726 issues=0 W0
+18.0m f=3037652 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2233728 issues=0 W0
+18.3m f=3067654 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2263730 issues=0 W0
+18.5m f=3097657 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2293733 issues=0 W0
+18.7m f=3127659 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2323735 issues=0 W0
+19.0m f=3157661 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2353737 issues=0 W0
+19.2m f=3187663 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2383739 issues=0 W0
+19.4m f=3217665 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2413741 issues=0 W0
+19.6m f=3247667 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2443743 issues=0 W0
+19.8m f=3277669 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2473745 issues=0 W0
+20.0m f=3307671 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2503747 issues=0 W0
+20.2m f=3337673 Overworld e4_4[5,2] badges=8 party=Pyrolion:61:183 Gnawlord:55:127 Glimmoth:55:140 Glimmoth:54:135 Stormane:54:129 Vespire:55:149 $2954 dex=50/126 goal=talk:e4_4:vesper_aside idle=2533749 issues=0 W0
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.evaluate: Target page, context or browser has been closed
+    at /home/claude/wildkin/tests/bot/run.mjs:60:46
+
+Node.js v22.22.0
+0.2m f=30000 BattleTransition route18[11,5] badges=8 party=Pyrolion:61:183 Gnawlord:56:129 Glimmoth:56:143 Glimmoth:55:137 Stormane:55:132 Vespire:56:152 $7277 dex=52/128 goal=talk:mirecoast:c2 idle=19207 issues=0 W0
+   BOSS g1 b0 foe 10/12 team 13/8/8/8/8/8 WON wild+88 grind+77
+   BOSS rival3 b1 foe 17/15/16/18 team 16/11/11/11/11/11 WON wild+7 grind+0
+   BOSS g2 b1 foe 17/17/18/20 team 21/15/15/15/15/15 WON wild+0 grind+0
+   BOSS cv_sable b2 foe 12/13/14 team 21/16/16/16/16/16 WON wild+2 grind+0
+   BOSS rival4 b2 foe 20/19/19/22 team 24/17/18/18/17/18 WON wild+1 grind+0
+   BOSS g3 b2 foe 21/22/22/25 team 27/21/21/21/21/21 WON wild+3 grind+0
+   BOSS rival5 b3 foe 27/25/26/26/29 team 29/23/23/23/23/22 WON wild+17 grind+0
+   BOSS g4 b3 foe 27/27/29/30 team 33/27/27/27/27/26 WON wild+7 grind+0
+   BOSS hd_corvin b4 foe 29/30/31 team 36/30/30/30/30/30 WON wild+1 grind+0
+   BOSS tw_sable b4 foe 29/30/31 team 37/31/30/30/30/30 WON wild+1 grind+0
+   BOSS dojo_master b4 foe 34/34/35 team 40/33/33/33/33/33 WON wild+6 grind+0
+   BOSS rival6 b4 foe 34/32/32/33/35 team 43/36/36/36/36/36 WON wild+1 grind+0
+   BOSS ob_corvin b4 foe 31/31/32 team 45/37/37/37/37/37 WON wild+0 grind+0
+   BOSS ob_nyx b4 foe 33/34/34/36 team 45/37/37/37/37/37 WON wild+0 grind+0
+   BOSS g6 b4 foe 33/33/34/34/36 team 46/38/38/38/38/38 WON wild+0 grind+0
+   BOSS g5 b5 foe 36/37/38/38/40 team 47/39/39/39/39/39 WON wild+2 grind+0
+   BOSS g7 b6 foe 41/42/42/43/45 team 53/43/43/43/43/41 WON wild+35 grind+0
+   BOSS g8 b7 foe 45/46/46/47/49 team 55/45/45/45/46/44 WON wild+41 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 56/47/47/47/47/45 LOST wild+0 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 56/47/48/48/48/47 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 56/47/48/48/48/47 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 56/48/48/48/48/47 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 57/48/49/48/48/48 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 57/49/49/49/49/49 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 57/49/50/49/49/49 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 58/50/50/49/50/50 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 58/50/51/50/50/50 LOST wild+3 grind+0
+   BOSS rival7 b8 foe 47/47/46/46/48/51 team 58/51/51/50/50/51 WON wild+3 grind+0
+   BOSS e4_1 b8 foe 50/51/51/50/53 team 58/52/52/51/51/52 WON wild+1 grind+0
+   BOSS e4_2 b8 foe 50/51/51/52/53 team 59/52/53/52/51/52 LOST wild+0 grind+0
+   BOSS e4_2 b8 foe 50/51/51/52/53 team 59/52/53/52/51/52 LOST wild+0 grind+0
+   BOSS e4_2 b8 foe 50/51/51/52/53 team 59/53/53/52/52/53 WON wild+0 grind+0
+   BOSS e4_3 b8 foe 52/52/52/53/55 team 59/53/54/52/52/53 LOST wild+0 grind+0
+   BOSS e4_3 b8 foe 52/52/52/53/55 team 59/53/54/53/52/53 WON wild+0 grind+0
+   BOSS e4_4 b8 foe 53/52/52/54/57 team 60/53/54/53/53/54 LOST wild+0 grind+0
+   BOSS e4_4 b8 foe 53/52/52/54/57 team 60/54/54/53/53/54 WON wild+0 grind+0
+   BOSS champ b8 foe 54/55/55/55/56/59 team 61/54/55/54/54/55 LOST wild+0 grind+0
+   BOSS champ b8 foe 54/55/55/55/56/59 team 61/55/55/54/54/55 LOST wild+0 grind+0
+   BOSS champ b8 foe 54/55/55/55/56/59 team 61/55/56/55/54/56 WON wild+0 grind+0
+Reached CHAMPION, stopping as asked
+FINAL {"frames":30000,"scene":"BattleTransition","map":"route18","pos":[11,5],"badges":["BOULDER","RIPPLE","SPARK","BLOOM","MIND","VENOM","CINDER","FROST"],"party":["Pyrolion:61:183","Gnawlord:56:129","Glimmoth:56:143","Glimmoth:55:137","Stormane:55:132","Vespire:56:152"],"money":7277,"caught":52,"seen":128,"champion":true,"goal":{"type":"talk","key":"mirecoast:c2","cost":74},"battles":{"wild":13,"trainer":2,"won":0,"lost":0,"caught":0,"ran":0,"whiteouts":1},"issues":0,"status":"","done":false,"sinceProgress":19207,"playTime":14090,"bossLog":[{"id":"g1","name":"GARRICK","foe":[10,12],"foeMax":12,"team":[13,8,8,8,8,8],"badges":0,"f":152773,"won":true,"wildSince":88,"grindSince":77,"fEnd":156678},{"id":"rival3","name":"{RIVAL}","foe":[17,15,16,18],"foeMax":18,"team":[16,11,11,11,11,11],"badges":1,"f":197638,"won":true,"wildSince":7,"grindSince":0,"fEnd":201410},{"id":"g2","name":"NERISSA","foe":[17,17,18,20],"foeMax":20,"team":[21,15,15,15,15,15],"badges":1,"f":235351,"won":true,"wildSince":0,"grindSince":0,"fEnd":239203},{"id":"cv_sable","name":"SABLE","foe":[12,13,14],"foeMax":14,"team":[21,16,16,16,16,16],"badges":2,"f":248016,"won":true,"wildSince":2,"grindSince":0,"fEnd":249362},{"id":"rival4","name":"{RIVAL}","foe":[20,19,19,22],"foeMax":22,"team":[24,17,18,18,17,18],"badges":2,"f":274407,"won":true,"wildSince":1,"grindSince":0,"fEnd":278306},{"id":"g3","name":"CASS","foe":[21,22,22,25],"foeMax":25,"team":[27,21,21,21,21,21],"badges":2,"f":316486,"won":true,"wildSince":3,"grindSince":0,"fEnd":319987},{"id":"rival5","name":"{RIVAL}","foe":[27,25,26,26,29],"foeMax":29,"team":[29,23,23,23,23,22],"badges":3,"f":357769,"won":true,"wildSince":17,"grindSince":0,"fEnd":363601},{"id":"g4","name":"MOSSA","foe":[27,27,29,30],"foeMax":30,"team":[33,27,27,27,27,26],"badges":3,"f":399941,"won":true,"wildSince":7,"grindSince":0,"fEnd":402802},{"id":"hd_corvin","name":"CORVIN","foe":[29,30,31],"foeMax":31,"team":[36,30,30,30,30,30],"badges":4,"f":446000,"won":true,"wildSince":1,"grindSince":0,"fEnd":447083},{"id":"tw_sable","name":"SABLE","foe":[29,30,31],"foeMax":31,"team":[37,31,30,30,30,30],"badges":4,"f":458900,"won":true,"wildSince":1,"grindSince":0,"fEnd":459862},{"id":"dojo_master","name":"MASTER TAO","foe":[34,34,35],"foeMax":35,"team":[40,33,33,33,33,33],"badges":4,"f":497721,"won":true,"wildSince":6,"grindSince":0,"fEnd":499223},{"id":"rival6","name":"{RIVAL}","foe":[34,32,32,33,35],"foeMax":35,"team":[43,36,36,36,36,36],"badges":4,"f":518041,"won":true,"wildSince":1,"grindSince":0,"fEnd":520127},{"id":"ob_corvin","name":"CORVIN","foe":[31,31,32],"foeMax":32,"team":[45,37,37,37,37,37],"badges":4,"f":525577,"won":true,"wildSince":0,"grindSince":0,"fEnd":526482},{"id":"ob_nyx","name":"NYX","foe":[33,34,34,36],"foeMax":36,"team":[45,37,37,37,37,37],"badges":4,"f":526691,"won":true,"wildSince":0,"grindSince":0,"fEnd":528642},{"id":"g6","name":"ORIN","foe":[33,33,34,34,36],"foeMax":36,"team":[46,38,38,38,38,38],"badges":4,"f":533258,"won":true,"wildSince":0,"grindSince":0,"fEnd":534828},{"id":"g5","name":"SILAS","foe":[36,37,38,38,40],"foeMax":40,"team":[47,39,39,39,39,39],"badges":5,"f":572515,"won":true,"wildSince":2,"grindSince":0,"fEnd":574006},{"id":"g7","name":"VULK","foe":[41,42,42,43,45],"foeMax":45,"team":[53,43,43,43,43,41],"badges":6,"f":629712,"won":true,"wildSince":35,"grindSince":0,"fEnd":630877},{"id":"g8","name":"ISOLDE","foe":[45,46,46,47,49],"foeMax":49,"team":[55,45,45,45,46,44],"badges":7,"f":721590,"won":true,"wildSince":41,"grindSince":0,"fEnd":725740},{"id":"rival7","name":"{RIVAL}","foe":[47,47,46,46,48,51],"foeMax":51,"team":[56,47,47,47,47,45],"badges":8,"f":730355,"won":false,"wildSince":0,"grindSince":0,"fEnd":733157},{"id":"rival7","name":"{RIVAL}","foe":[47,47,46,46,48,51],"foeMax":51,"team":[56,47,48,48,48,47],"badges":8,"f":740028,"won":false,"wildSince":3,"grindSince":0,"fEnd":741225},{"id":"rival7","name":"{RIVAL}","foe":[47,47,46,46,48,51],"foeMax":51,"team":[56,47,48,48,48,47],"badges":8,"f":742043,"won":false,"wildSince":3,"grindSince":0,"fEnd":745407},{"id":"rival7","name":"{RIVAL}","foe":[47,47,46,46,48,51],"foeMax":51,"team":[56,48,48,48,48,47],"badges":8,"f":746225,"won":false,"wildSince":3,"grindSince":0,"fEnd":748869},{"id":"rival7","name":"{RIVAL}","foe":[47,47,46,46,48,51],"foeMax":51,"team":[57,48,49,48,48,48],"badges":8,"f":749687,"won":false,"wildSince":3,"grindSince":0,"fEnd":753059},{"id":"rival7","name":"{RIVAL}","foe":[47,47,46,46,48,51],"foeMax":51,"team":[57,49,49,49,49,49],"badges":8,"f":753877,"won":false,"wildSince":3,"grindSince":0,"fEnd":756750},{"id":"rival7","name":"{RIVAL}","foe":[47,47,46,46,48,51],"foeMax":51,"team":[57,49,50,49,49,49],"badges":8,"f":757568,"won":false,"wildSince":3,"grindSince":0,"fEnd":760448},{"id":"rival7","name":"{RIVAL}","foe":[47,47,46,46,48,51],"foeMax":51,"team":[58,50,50,49,50,50],"badges":8,"f":761266,"won":false,"wildSince":3,"grindSince":0,"fEnd":764737},{"id":"rival7","name":"{RIVAL}","foe":[47,47,46,46,48,51],"foeMax":51,"team":[58,50,51,50,50,50],"badges":8,"f":765555,"won":false,"wildSince":3,"grindSince":0,"fEnd":768383},{"id":"rival7","name":"{RIVAL}","foe":[47,47,46,46,48,51],"foeMax":51,"team":[58,51,51,50,50,51],"badges":8,"f":769201,"won":true,"wildSince":3,"grindSince":0,"fEnd":771743},{"id":"e4_1","name":"THORNE","foe":[50,51,51,50,53],"foeMax":53,"team":[58,52,52,51,51,52],"badges":8,"f":778588,"won":true,"wildSince":1,"grindSince":0,"fEnd":781320},{"id":"e4_2","name":"WREN","foe":[50,51,51,52,53],"foeMax":53,"team":[59,52,53,52,51,52],"badges":8,"f":781698,"won":false,"wildSince":0,"grindSince":0,"fEnd":783093},{"id":"e4_2","name":"WREN","foe":[50,51,51,52,53],"foeMax":53,"team":[59,52,53,52,51,52],"badges":8,"f":784517,"won":false,"wildSince":0,"grindSince":0,"fEnd":787832},{"id":"e4_2","name":"WREN","foe":[50,51,51,52,53],"foeMax":53,"team":[59,53,53,52,52,53],"badges":8,"f":788290,"won":true,"wildSince":0,"grindSince":0,"fEnd":790875},{"id":"e4_3","name":"MORRIGAN","foe":[52,52,52,53,55],"foeMax":55,"team":[59,53,54,52,52,53],"badges":8,"f":791209,"won":false,"wildSince":0,"grindSince":0,"fEnd":792271},{"id":"e4_3","name":"MORRIGAN","foe":[52,52,52,53,55],"foeMax":55,"team":[59,53,54,53,52,53],"badges":8,"f":793399,"won":true,"wildSince":0,"grindSince":0,"fEnd":794795},{"id":"e4_4","name":"VESPER","foe":[53,52,52,54,57],"foeMax":57,"team":[60,53,54,53,53,54],"badges":8,"f":795137,"won":false,"wildSince":0,"grindSince":0,"fEnd":798378},{"id":"e4_4","name":"VESPER","foe":[53,52,52,54,57],"foeMax":57,"team":[60,54,54,53,53,54],"badges":8,"f":799652,"won":true,"wildSince":0,"grindSince":0,"fEnd":803909},{"id":"champ","name":"ELOWEN","foe":[54,55,55,55,56,59],"foeMax":59,"team":[61,54,55,54,54,55],"badges":8,"f":804243,"won":false,"wildSince":0,"grindSince":0,"fEnd":807192},{"id":"champ","name":"ELOWEN","foe":[54,55,55,55,56,59],"foeMax":59,"team":[61,55,55,54,54,55],"badges":8,"f":321,"won":false,"wildSince":0,"grindSince":0,"fEnd":3404},{"id":"champ","name":"ELOWEN","foe":[54,55,55,55,56,59],"foeMax":59,"team":[61,55,56,55,54,56],"badges":8,"f":4976,"won":true,"wildSince":0,"grindSince":0,"fEnd":8451}],"wildFought":229,"grindFought":77,"whiteouts":17}

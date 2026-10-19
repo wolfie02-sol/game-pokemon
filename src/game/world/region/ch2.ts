@@ -323,7 +323,7 @@ export function build(W: World) {
           y: 2,
           dir: 'down',
           look: 'nerissa',
-          trainer: T('g2', 'LEADER', 'NERISSA', [['Seasprig', 18], ['Clamlet', 18], ['Croakard', 21]], {
+          trainer: T('g2', 'LEADER', 'NERISSA', [['Seasprig', 17], ['Pondlet', 17], ['Clamlet', 18], ['Croakard', 20]], {
             look: 'nerissa',
             money: 99,
             smart: true,

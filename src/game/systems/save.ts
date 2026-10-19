@@ -1,4 +1,5 @@
 import { DEFAULT_OPTIONS, type GameState, type Options } from './state';
+import { expFor } from './mon';
 
 const SAVE_KEY = 'wildkin-ember-save-v2';
 const OPT_KEY = 'wildkin-ember-options-v1';
@@ -45,6 +46,8 @@ export function loadGame(): GameState | null {
     st.seen ??= [];
     st.caught ??= [];
     st.badges ??= [];
+    // the level curve got steeper: keep every Wildkin's level and start it at the bottom of its level's bar
+    for (const m of [...st.party, ...st.box]) if (m && m.exp < expFor(m.lvl)) m.exp = expFor(m.lvl);
     return st;
   } catch {
     return null;

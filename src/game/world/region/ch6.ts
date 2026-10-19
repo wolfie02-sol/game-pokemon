@@ -419,7 +419,7 @@ export function build(W: World) {
           y: 2,
           dir: 'down',
           look: 'vulk',
-          trainer: T('g7', 'LEADER', 'VULK', [['Magmole', 42], ['Blazesteed', 43], ['Solfennec', 44], ['Pyrehound', 47]], {
+          trainer: T('g7', 'LEADER', 'VULK', [['Magmole', 41], ['Blazesteed', 42], ['Magmaw', 42], ['Solfennec', 43], ['Pyrehound', 45]], {
             look: 'vulk',
             money: 99,
             smart: true,
