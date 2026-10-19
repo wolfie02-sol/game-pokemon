@@ -273,7 +273,11 @@ export class Overworld extends Scene {
       this.playerPathRes = null;
       r();
     }
-    if (this.busy > 0) return;
+    if (this.busy > 0) {
+      this.walkQueue = [];
+      this.walkGoal = null;
+      return;
+    }
     if (this.bumpCd > 0) this.bumpCd--;
 
     const i = g.input;
@@ -284,15 +288,50 @@ export class Overworld extends Scene {
       });
       return;
     }
-    if (this.clickTalk) {
+    if (this.clickTalk || this.clickSpot) {
       const n = this.clickTalk;
+      const spot = this.clickSpot;
       this.clickTalk = null;
-      const d = this.reachDir(n);
-      if (d && !n.moving && !n.hidden) {
+      this.clickSpot = null;
+      const target = n ?? spot!;
+      if (!n || (!n.moving && !n.hidden)) {
+        const d = this.reachDir(target);
+        if (d) {
+          this.faceAndAct(d, n);
+          return;
+        }
+        const path = this.pathTo(target);
+        if (path) {
+          this.walkQueue = path;
+          this.walkGoal = { npc: n, spot };
+        }
+      }
+    }
+    if (this.walkQueue.length || this.walkGoal) {
+      if (i.dir() || i.pressed('a') || i.pressed('b')) {
+        this.walkQueue = [];
+        this.walkGoal = null;
+      } else if (this.walkQueue.length) {
+        const d = this.walkQueue.shift()!;
         this.dir = d;
         this.s.dir = d;
-        this.talkTo(n);
+        const bx = this.px;
+        const by = this.py;
+        this.tryMove(d);
+        if (!this.moving && this.px === bx && this.py === by) {
+          this.walkQueue = [];
+          this.walkGoal = null;
+        }
         return;
+      } else {
+        const goal = this.walkGoal!;
+        this.walkGoal = null;
+        const target = goal.npc ?? goal.spot!;
+        const d = this.reachDir(target);
+        if (d && (!goal.npc || !goal.npc.hidden)) {
+          this.faceAndAct(d, goal.npc);
+          return;
+        }
       }
     }
     if (i.pressed('a')) {
@@ -627,9 +666,64 @@ export class Overworld extends Scene {
   }
 
   private clickTalk: NpcRuntime | null = null;
+  private walkQueue: Dir[] = [];
+  private walkGoal: { npc: NpcRuntime | null; spot: { x: number; y: number } | null } | null = null;
 
-  /** Direction the player must face to talk to `n` (adjacent, or across a counter). */
-  private reachDir(n: NpcRuntime): Dir | null {
+  private faceAndAct(d: Dir, n: NpcRuntime | null) {
+    this.dir = d;
+    this.s.dir = d;
+    if (n) this.talkTo(n);
+    else this.interact();
+  }
+
+  /** Shortest walk to a tile from which `t` can be reached (tap-to-walk). */
+  private pathTo(t: { x: number; y: number }): Dir[] | null {
+    const W = this.map.w;
+    const prev = new Map<number, [number, Dir]>();
+    const start = this.py * W + this.px;
+    const q = [start];
+    prev.set(start, [-1, 'down']);
+    const at = (k: number) => ({ x: k % W, y: Math.floor(k / W) });
+    while (q.length) {
+      const k = q.shift()!;
+      const p = at(k);
+      if (k !== start) {
+        const sx = this.px, sy = this.py;
+        this.px = p.x;
+        this.py = p.y;
+        const ok = this.reachDir(t);
+        this.px = sx;
+        this.py = sy;
+        if (ok) {
+          const out: Dir[] = [];
+          let c = k;
+          while (c !== start) {
+            const [pk, d] = prev.get(c)!;
+            out.unshift(d);
+            c = pk;
+          }
+          return out;
+        }
+      }
+      if (prev.size > 4000) break;
+      for (const d of ['up', 'down', 'left', 'right'] as Dir[]) {
+        const nx = p.x + DX[d];
+        const ny = p.y + DY[d];
+        const nk = ny * W + nx;
+        if (prev.has(nk) || this.blocked(nx, ny)) continue;
+        if (this.map.warps.some((w) => w.x === nx && w.y === ny)) continue;
+        if (!!this.s.surfing !== !!TILES[this.tileAt(nx, ny)].water) continue;
+        prev.set(nk, [k, d]);
+        q.push(nk);
+      }
+    }
+    return null;
+  }
+  /** A sign or item the player tapped; handled like pressing A while facing it. */
+  private clickSpot: { x: number; y: number } | null = null;
+
+  /** Direction the player must face to reach `n` (adjacent, or across a counter). */
+  private reachDir(n: { x: number; y: number }): Dir | null {
     for (const d of ['up', 'down', 'left', 'right'] as Dir[]) {
       const fx = this.px + DX[d];
       const fy = this.py + DY[d];
@@ -975,6 +1069,13 @@ export class Overworld extends Scene {
       if (this.s.flags['item:' + it.id]) continue;
       list.push({ y: it.y * TS, draw: () => c.drawImage(itemBallSprite(), it.x * TS - camX, it.y * TS - camY) });
     }
+    if (!this.moving && this.busy === 0 && this.fade === 0) {
+      const spots: { x: number; y: number }[] = [...this.map.signs];
+      for (const it of this.map.items) if (!this.s.flags['item:' + it.id]) spots.push(it);
+      for (const sp of spots) {
+        this.g.region(this, { x: sp.x * TS - camX, y: sp.y * TS - camY, w: TS, h: TS, click: () => (this.clickSpot = { x: sp.x, y: sp.y }) });
+      }
+    }
     for (const n of this.npcs) {
       if (n.hidden) continue;
       const sx = n.x * TS + n.ox - camX;
@@ -982,7 +1083,7 @@ export class Overworld extends Scene {
       const look = LOOKS[n.def.look] ?? LOOKS.boy;
       const prog = Math.max(Math.abs(n.ox), Math.abs(n.oy));
       const phase = n.moving && prog >= 4 && prog < 12 ? 1 + ((n.x + n.y) % 2) : 0;
-      if (!n.moving && !this.moving && this.busy === 0 && this.fade === 0 && this.reachDir(n)) {
+      if (!n.moving && !this.moving && this.busy === 0 && this.fade === 0) {
         this.g.region(this, { x: sx, y: sy - 4, w: TS, h: TS + 4, click: () => (this.clickTalk = n) });
       }
       const monLook = MON_LOOKS[n.def.look];
