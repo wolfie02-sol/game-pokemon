@@ -6,6 +6,8 @@
 import { makeCanvas } from '../core/gfx';
 import { species, type ArtSpec } from '../data/species';
 import { mix } from './pixel';
+import { Pix } from './rich';
+import { RICH } from './richdesigns';
 
 const N = 48;
 const OUTLINE = '#201a2e';
@@ -948,7 +950,12 @@ export function creatureSprite(sp: number, back = false): HTMLCanvasElement {
   const k = sp + (back ? 'b' : 'f');
   let c = cache.get(k);
   if (!c) {
-    c = drawCreature(species(sp).art, back);
+    const hand = RICH[species(sp).name];
+    if (hand) {
+      const p = new Pix();
+      hand(p, back);
+      c = p.finish();
+    } else c = drawCreature(species(sp).art, back);
     cache.set(k, c);
   }
   return c;

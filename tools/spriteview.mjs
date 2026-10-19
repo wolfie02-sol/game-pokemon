@@ -1,0 +1,20 @@
+// node tools/spriteview.mjs Sproutle,Bramblebun [out.png]
+import * as esbuild from '/opt/npm-tools/node_modules/esbuild/lib/main.js';
+import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+const names = process.argv[2] ?? 'Sproutle';
+const out = path.resolve(process.argv[3] ?? 'spriteview.png');
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sv-'));
+await esbuild.build({ entryPoints: [new URL('./spriteview.ts', import.meta.url).pathname], bundle: true, format: 'iife', outfile: path.join(dir, 'sv.js'), logLevel: 'warning' });
+fs.writeFileSync(path.join(dir, 'index.html'), '<body style="margin:0"><script src="sv.js"></script></body>');
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const p = await b.newPage();
+const errs = [];
+p.on('pageerror', (e) => errs.push(String(e)));
+await p.goto('file://' + path.join(dir, 'index.html') + '?n=' + names);
+await p.waitForSelector('canvas', { timeout: 8000 }).catch(() => { console.log(errs.join('\n')); process.exit(1); });
+await p.locator('canvas').screenshot({ path: out });
+await b.close();
+console.log(errs.length ? errs.join('\n') : 'saved ' + out);
