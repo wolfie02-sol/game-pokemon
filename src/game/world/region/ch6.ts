@@ -192,9 +192,13 @@ export function build(W: World) {
             await c.say('Kyeeeee! A freezing wind howls through the cavern!');
             const r = await c.wild(SP.GALECREST, 50, { noRun: true, music: 'boss' });
             if (r === 'lose') return;
-            c.set('galecrestDone');
             c.hide('galecrest');
-            if (r !== 'caught') await c.say('GALECREST vanished into a flurry of snow!');
+            if (r === 'caught') {
+              c.set('galecrestDone');
+              return;
+            }
+            // not caught: it leaves for now and is back the next time this place is visited, so it can't be missed for good
+            await c.say('GALECREST vanished into a flurry of snow! It might come back if you return later.');
           },
         },
       ],
@@ -390,9 +394,13 @@ export function build(W: World) {
             await c.say('Krrraaaah! A wave of heat rolls over you! The dawn phoenix spreads its wings!');
             const r = await c.wild(SP.SOLMARA, 50, { noRun: true, music: 'boss' });
             if (r === 'lose') return;
-            c.set('solmaraDone');
             c.hide('solmara');
-            if (r !== 'caught') await c.say('SOLMARA soared up out of the caldera and into the dawn sky!');
+            if (r === 'caught') {
+              c.set('solmaraDone');
+              return;
+            }
+            // not caught: it leaves for now and is back the next time this place is visited, so it can't be missed for good
+            await c.say('SOLMARA soared up out of the caldera! It might come back if you return later.');
           },
         },
       ],

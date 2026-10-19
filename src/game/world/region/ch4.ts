@@ -166,9 +166,13 @@ export function build(W: World) {
             await c.say('Kreee-zzzak! The air crackles with static!');
             const r = await c.wild(SP.VOLTWING, 50, { noRun: true, music: 'boss' });
             if (r === 'lose') return;
-            c.set('voltwingDone');
             c.hide('voltwing');
-            if (r !== 'caught') await c.say('VOLTWING flew off in a burst of lightning!');
+            if (r === 'caught') {
+              c.set('voltwingDone');
+              return;
+            }
+            // not caught: it leaves for now and is back the next time this place is visited, so it can't be missed for good
+            await c.say('VOLTWING flew off in a burst of lightning! It might come back if you return later.');
           },
         },
       ],
@@ -215,7 +219,8 @@ export function build(W: World) {
       npcs: [
         { id: 'h1', x: 12, y: 6, dir: 'left', look: 'hiker', trainer: T('gl_ron', 'HIKER', 'RON', [['Graniteel', 21], ['Pebbit', 20], ['Pebbit', 20]]), sight: 4 },
         { id: 'p1', x: 3, y: 4, dir: 'down', look: 'girl', trainer: T('gl_isa', 'PICNICKER', 'ISA', [['Puffmote', 22], ['Hummaloon', 22]]), sight: 3 },
-        { id: 'h2', x: 11, y: 13, dir: 'down', look: 'hiker', trainer: T('gl_mo', 'HIKER', 'MO', [['Bouldrake', 23]]), sight: 2 },
+        // stands beside the passage (not in it) so the tunnel stays open after the battle
+        { id: 'h2', x: 13, y: 14, dir: 'up', look: 'hiker', trainer: T('gl_mo', 'HIKER', 'MO', [['Bouldrake', 23]]), sight: 2 },
       ],
     }),
   );

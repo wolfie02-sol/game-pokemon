@@ -49,7 +49,7 @@ type UiWait =
   | { kind: 'text'; pages: string[][]; page: number; shown: number; auto: number | null; res: () => void }
   | { kind: 'cmd'; res: (v: number) => void }
   | { kind: 'move'; res: (v: number) => void }
-  | { kind: 'yesno'; res: (v: boolean) => void; idx: number; prompt: string[] }
+  | { kind: 'yesno'; res: (v: boolean) => void; idx: number; prompt: string[]; onB?: boolean }
   | { kind: 'stats'; res: () => void; before: number[]; after: number[] };
 
 interface Task {
@@ -161,12 +161,13 @@ export class BattleScene extends Modal<BattleResult> {
     return this.msg(text, 40);
   }
 
-  private yesNo(text: string): Promise<boolean> {
+  /** `onB` is the answer B gives (default NO). */
+  private yesNo(text: string, onB = false): Promise<boolean> {
     const pages = paginate(fmt(this.g, text));
     return this.msg(text, 0).then(
       () =>
         new Promise<boolean>((res) => {
-          this.ui = { kind: 'yesno', res, idx: 0, prompt: pages[pages.length - 1] };
+          this.ui = { kind: 'yesno', res, idx: 0, prompt: pages[pages.length - 1], onB };
         }),
     );
   }
@@ -578,7 +579,7 @@ export class BattleScene extends Modal<BattleResult> {
           return;
         }
       }
-      const stop = await this.yesNo(`Stop learning ${mv.name.toUpperCase()}?`);
+      const stop = await this.yesNo(`Stop learning ${mv.name.toUpperCase()}?`, true);
       if (stop) {
         await this.msg(`${monName(m)} did not learn ${mv.name.toUpperCase()}.`);
         return;
@@ -1079,7 +1080,7 @@ export class BattleScene extends Modal<BattleResult> {
           this.g.sfx('select');
         }
         if (i.pressed('a') || i.pressed('b')) {
-          const v = i.pressed('a') ? ui.idx === 0 : false;
+          const v = i.pressed('a') ? ui.idx === 0 : !!ui.onB;
           this.g.sfx(v ? 'confirm' : 'cancel');
           this.ui = { kind: 'none' };
           ui.res(v);

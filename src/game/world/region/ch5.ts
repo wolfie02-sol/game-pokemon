@@ -21,7 +21,25 @@ const sleeper: Script = async (c) => {
   if (r === 'lose') return;
   c.set('slumbearDone');
   c.hide('sleeper');
-  if (r !== 'caught') await c.say('The SLEEPER lumbered off into the hills.');
+  if (r === 'caught') {
+    c.set('slumbearCaught');
+    return;
+  }
+  // not caught: it settles down for another nap off the road, so it can't be missed for good
+  c.set('slumbearRoams');
+  await c.say('The SLEEPER lumbered off and flopped down for another nap in the corner of the meadow.');
+};
+
+const sleeperAgain: Script = async (c) => {
+  await c.say('The SLEEPER is dozing in the corner again. It opens one eye, annoyed!');
+  const r = await c.wild(SP.SLUMBEAR, 30, { music: 'boss' });
+  if (r === 'lose') return;
+  c.hide('sleeper2');
+  if (r === 'caught') {
+    c.set('slumbearCaught');
+    return;
+  }
+  await c.say('The SLEEPER wandered off. It will be back for a nap later.');
 };
 
 export function build(W: World) {
@@ -71,6 +89,7 @@ export function build(W: World) {
       items: [{ id: 'r14tm', x: 17, y: 28, item: 'tm08' }],
       npcs: [
         { id: 'sleeper', x: 9, y: 3, dir: 'down', look: 'sleeper', cond: not('slumbearDone'), talk: sleeper },
+        { id: 'sleeper2', x: 17, y: 4, dir: 'down', look: 'sleeper', cond: (s) => !!s.flags.slumbearRoams && !s.flags.slumbearCaught, talk: sleeperAgain },
         { id: 't1', x: 6, y: 7, dir: 'right', look: 'birdkeeper', trainer: T('r14_pip', 'BIRDKEEPER', 'PIPER', [['Skyroost', 28], ['Dashbird', 28]]), sight: 3 },
         { id: 't2', x: 13, y: 13, dir: 'left', look: 'beauty', trainer: T('r14_sky', 'BEAUTY', 'SKYE', [['Emberfen', 28], ['Lunapuff', 29]]), sight: 4 },
         { id: 't3', x: 5, y: 20, dir: 'right', look: 'tamer', trainer: T('r14_ock', 'TAMER', 'OCKER', [['Embercolt', 29], ['Rhinoxen', 29]]), sight: 4 },

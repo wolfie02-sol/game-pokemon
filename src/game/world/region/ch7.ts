@@ -471,11 +471,22 @@ export function build(W: World) {
           look: member.look,
           trainer: member.trainer,
           sight: 6,
+          // once beaten they stand aside (below), so coming back after a loss never finds the stairs blocked
+          cond: (s) => !s.flags['tr:' + member.trainer],
           afterWin: async (c) => {
             await c.say(member.win);
             await c.walkNpc(member.id, ['right']);
             c.face(member.id, 'left');
           },
+        },
+        {
+          id: member.id + '_aside',
+          x: 5,
+          y: 1,
+          dir: 'left',
+          look: member.look,
+          cond: (s) => !!s.flags['tr:' + member.trainer],
+          talk: member.win || 'Go on. The CHAMPION is watching.',
         },
       ],
     });
@@ -678,10 +689,14 @@ export function build(W: World) {
             await c.say(['...', 'A vast, quiet mind brushes against yours. It is curious. And very, very lonely.', 'NULLMIND rises from the heart of the RIFT!']);
             const r = await c.wild(SP.NULLMIND, 70, { noRun: true, music: 'boss' });
             if (r === 'lose') return;
-            c.set('nullmindDone');
             c.hide('nullmind');
-            if (r !== 'caught') await c.say('NULLMIND drifted back into the depths of the RIFT. Maybe it will come back someday.');
-            else await c.say('NULLMIND seems calm for the first time in ages. It is no longer alone.');
+            if (r === 'caught') {
+              c.set('nullmindDone');
+              await c.say('NULLMIND seems calm for the first time in ages. It is no longer alone.');
+              return;
+            }
+            // not caught: back the next time the RIFT is visited, so it can't be missed for good
+            await c.say('NULLMIND drifted back into the depths of the RIFT. It will surface again when you return.');
           },
         },
       ],

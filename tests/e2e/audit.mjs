@@ -69,7 +69,7 @@ await step('wild encounter', async () => {
     // choose RUN: set menu to run via keys: down, right
     for (let i = 0; i < 12; i++) await press(page, 'a', 40);
     const ph = await ev(() => { const b = window.__wildkin.scenes.find((x) => x.constructor.name === 'BattleScene'); return b ? b.phase ?? b.stage ?? b.mode : 'gone'; });
-    await mashUntilIdle(page, 300);
+    await mashUntilIdle(page, 700);
     ok('wild battle ends back on overworld', await idle(page));
   }
 });

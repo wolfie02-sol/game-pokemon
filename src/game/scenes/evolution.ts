@@ -7,7 +7,7 @@ import { move } from '../data/moves';
 import { species } from '../data/species';
 import { evolve, monName, movesAt, type Mon } from '../systems/mon';
 import { markCaught as markCaughtEvo } from '../systems/state';
-import { say, yesNo } from './dialog';
+import { ask, say, yesNo } from './dialog';
 import { ForgetMoveScene } from './summary';
 
 /** Shared out-of-battle move learning flow. */
@@ -31,7 +31,8 @@ export async function learnMoveDialog(g: Game, m: Mon, id: string) {
         return;
       }
     }
-    if (await yesNo(g, `Stop learning ${mv.name.toUpperCase()}?`)) {
+    // B here means "yes, stop" so backing out never loops
+    if ((await ask(g, `Stop learning ${mv.name.toUpperCase()}?`, ['YES', 'NO'], 0)) === 0) {
       await say(g, `${monName(m)} did not learn ${mv.name.toUpperCase()}.`);
       return;
     }
