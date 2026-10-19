@@ -1,0 +1,10 @@
+import { launch, start, press, wait } from './lib.mjs';
+const { browser, page } = await launch();
+await start(page, { map: 'riverton', x: 10, y: 10, party: [['Emberkit', 20]] });
+await page.evaluate(() => { window.__ft = []; let last = performance.now(); const f = (t) => { window.__ft.push(t - last); last = t; if (window.__ft.length < 400) requestAnimationFrame(f); }; requestAnimationFrame(f); });
+for (let i = 0; i < 12; i++) await press(page, ['left','right','up','down'][i%4], 300);
+await wait(1500);
+const r = await page.evaluate(() => { const a = window.__ft.slice(5).sort((x,y)=>x-y); return { n: a.length, med: a[a.length>>1].toFixed(1), p95: a[Math.floor(a.length*0.95)].toFixed(1), max: a.at(-1).toFixed(1), heap: performance.memory ? (performance.memory.usedJSHeapSize/1e6).toFixed(1) : '?' }; });
+console.log(JSON.stringify(r));
+const t0 = Date.now(); await page.reload(); await page.waitForFunction(() => window.__wildkinDebug); console.log('boot ms', Date.now() - t0);
+await browser.close();

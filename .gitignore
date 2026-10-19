@@ -2,3 +2,4 @@ node_modules
 dist
 dist-local
 dist-standalone
+tests/e2e/shots

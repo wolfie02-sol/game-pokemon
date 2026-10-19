@@ -1,0 +1,13 @@
+import { launch, start, top, press, idle, wait, shot } from './lib.mjs';
+import { drive } from './battledrv.mjs';
+const ok = (name, cond, info = '') => console.log(cond ? 'PASS' : 'FAIL', name, info);
+const { browser, page, errors } = await launch();
+const ev = (f, a) => page.evaluate(f, a);
+const gyms = [['brindle_gym','garrick','BOULDER']];
+await start(page, { map: 'brindle_gym', x: 4, y: 3, party: [['Splashel', 40]] });
+await press(page, 'up', 30); await press(page, 'a');
+const r = await drive(page, () => ({ cmd: 0, move: 0 }), 600);
+const s = await ev(() => { const s = window.__wildkin.state; return { badges: s.badges, bag: Object.keys(s.bag), money: s.money }; });
+ok('gym leader gives badge', s.badges.includes('BOULDER'), JSON.stringify(s));
+console.log(errors);
+await browser.close();
