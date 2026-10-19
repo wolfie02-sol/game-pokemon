@@ -106,6 +106,7 @@ export class StartMenu extends Modal<void> {
         const yes = await yesNo(g, 'Would you like to save the game?');
         if (yes) {
           if (saveGame(g.state!)) {
+            g.autosave.resume(g.state!);
             g.sfx('save');
             await say(g, '{PLAYER} saved the game!');
           } else await say(g, "Saving isn't available in this browser (storage is blocked).");

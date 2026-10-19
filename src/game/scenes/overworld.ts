@@ -280,6 +280,15 @@ export class Overworld extends Scene {
     }
     if (this.bumpCd > 0) this.bumpCd--;
 
+    // standing still with nothing running: a consistent moment to autosave
+    if (!this.walkQueue.length && !this.walkGoal && this.fade === 0 && g.scenes.length === 1) g.autosave.safeNow = true;
+    if (g.autosave.pendingMessage && g.scenes.length === 1) {
+      const msg = g.autosave.pendingMessage;
+      g.autosave.pendingMessage = null;
+      void this.run(async (c) => c.say(msg));
+      return;
+    }
+
     const i = g.input;
     if (i.pressed('start')) {
       g.sfx('menu');
@@ -811,12 +820,41 @@ export class Overworld extends Scene {
     this.busy++;
     const c = this.ctx(self);
     return fn(c)
-      .catch((e) => console.error('Script error', e))
+      .catch((e) => this.g.reportError(e, 'script'))
       .finally(() => {
-        this.busy--;
+        this.busy = Math.max(0, this.busy - 1);
         this.refresh();
         this.g.input.consume();
       });
+  }
+
+  /**
+   * Drop whatever event was running after an error and hand control back to
+   * the player where they stand. Pending event promises are abandoned.
+   */
+  recoverFromError() {
+    this.busy = 0;
+    this.waiters = [];
+    this.npcPaths.clear();
+    this.playerPath = [];
+    this.playerPathRes = null;
+    this.moving = null;
+    this.off = 0;
+    this.jump = 0;
+    this.crossing = null;
+    this.fade = 0;
+    this.fadeTarget = 0;
+    this.fadeRes = null;
+    this.walkQueue = [];
+    this.walkGoal = null;
+    for (const n of this.npcs) {
+      n.moving = null;
+      n.ox = 0;
+      n.oy = 0;
+    }
+    this.s.x = this.px;
+    this.s.y = this.py;
+    this.g.music(this.map.music);
   }
 
   wait(frames: number): Promise<void> {

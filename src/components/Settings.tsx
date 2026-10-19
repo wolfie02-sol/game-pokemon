@@ -140,6 +140,22 @@ export function SettingsDialog({ game, layout, onClose }: { game: Game; layout: 
         </div>
 
         <div className="saves">
+          <h3>Saving</h3>
+          <label className="small">
+            <input
+              type="checkbox"
+              checked={o.autosave}
+              onChange={(e: { target: { checked: boolean } }) => {
+                game.setOptions({ autosave: e.target.checked });
+                force((n) => n + 1);
+              }}
+            />{' '}
+            Autosave
+          </label>
+          <p className="small">
+            With autosave on, the game saves by itself when you reach a new area, after story events and every couple of minutes, and when you switch away
+            from the tab. It never saves in the middle of a battle or a cutscene. A small SAVED sign appears in the corner. You can still SAVE from the in-game menu.
+          </p>
           <h3>Move a save between devices</h3>
           <div className="row">
             <button type="button" className="pill-btn" onClick={doExport}>

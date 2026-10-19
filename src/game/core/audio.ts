@@ -298,6 +298,11 @@ export class Audio {
   onChange: (() => void) | null = null;
 
   /** Must be called from a user gesture. */
+  /** True once audio has been started by a tap or key press. */
+  get started(): boolean {
+    return this.ctx !== null;
+  }
+
   unlock() {
     if (!this.ctx) {
       const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -322,7 +327,8 @@ export class Audio {
         this.play(n);
       }
     }
-    if (this.ctx.state === 'suspended') void this.ctx.resume();
+    // iOS also reports 'interrupted' after a call or app switch
+    if (this.ctx.state !== 'running') void this.ctx.resume().catch(() => {});
   }
 
   setMuted(m: boolean) {

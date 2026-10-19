@@ -8,7 +8,7 @@ import { drawSky } from './ending';
 import { hasSave, loadGame } from '../systems/save';
 import { newState } from '../systems/state';
 import { Rng } from '../core/rng';
-import { say } from './dialog';
+import { say, yesNo } from './dialog';
 import { drawSaveLine, OptionsScene } from './menus';
 import { NamingScene } from './naming';
 import { Overworld } from './overworld';
@@ -87,10 +87,19 @@ export class TitleScene extends Scene {
       }
       await g.open(new FadeScene('out'));
       g.state = st;
+      g.autosave.baseline(st);
       g.rng = new Rng(st.seed ^ Math.floor(st.playTime));
       g.reset(new Overworld(g));
       g.hooks.onChange?.();
       return;
+    }
+    if (this.hasSave) {
+      // autosave would replace the old game, so make sure that is what the player wants
+      const sure = await yesNo(g, 'There is a saved game on this device. A new game will replace it as soon as the game saves. Start a new game?');
+      if (!sure) {
+        this.busy = false;
+        return;
+      }
     }
     await g.open(new FadeScene('out'));
     g.reset(new IntroScene());

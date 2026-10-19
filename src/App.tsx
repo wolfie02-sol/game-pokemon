@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { DPad, PadButton } from './components/Controls';
 import { Roster } from './components/Roster';
 import { SettingsDialog } from './components/Settings';
+import { CrashScreen } from './components/CrashScreen';
+import type { ErrorReport } from './game/core/diagnostics';
+import { recordError } from './game/core/diagnostics';
 import { createGame, type Game } from './game';
 import { keyLabel } from './game/core/input';
 
@@ -37,16 +40,21 @@ function fitScale(availW: number, availH: number): number {
   return Math.max(1 / dpr, Math.min(s, 8));
 }
 
+/** Phones in portrait shorter than this hide the top bar so the screen can be drawn larger. */
+export const COMPACT_PORTRAIT = 720;
+
 function computeScale(layout: Layout): number {
   const w = window.innerWidth;
   const h = window.innerHeight;
   if (layout === 'keys') return fitScale(w - 64, h - 48 - 104);
   if (layout === 'touch-portrait') {
-    const controls = Math.min(270, Math.max(210, h * 0.32));
-    return fitScale(w - 40, h - 48 - controls - 24);
+    const bar = h < COMPACT_PORTRAIT ? 0 : 48;
+    const controls = Math.min(270, Math.max(200, h * 0.32));
+    return fitScale(w - 40, h - bar - controls - 24);
   }
+  // landscape: START and SELECT sit in the side columns, so the screen gets the full height
   const side = Math.min(200, Math.max(140, w * 0.22));
-  return fitScale(w - side * 2 - 24, h - 56);
+  return fitScale(w - side * 2 - 24, h - 16);
 }
 
 export default function App() {
@@ -58,16 +66,46 @@ export default function App() {
   const [scale, setScale] = useState(() => computeScale(layoutFor('auto')));
   const [muted, setMuted] = useState(false);
   const [dialog, setDialog] = useState<null | 'how' | 'settings'>(null);
+  const [crash, setCrash] = useState<ErrorReport | null>(null);
 
   // boot the shared engine once
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const g = createGame(canvas);
+    let g: Game;
+    try {
+      g = createGame(canvas);
+    } catch (e) {
+      setCrash(recordError({ scenes: [], state: null }, e, 'boot'));
+      return;
+    }
     g.hooks.onChange = () => setRev((n) => n + 1);
+    g.hooks.onCrash = (r) => setCrash(r);
     window.__wildkin = g;
     setGame(g);
+    // save at a safe moment when the tab is hidden, switched away from or closed
+    const flush = () => {
+      g.flushAutosave();
+    };
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    // iOS only lets audio start from a finished tap, and pauses it after app switches
+    const unlockAudio = () => g.audio.unlock();
+    document.addEventListener('touchend', unlockAudio, { passive: true });
+    document.addEventListener('click', unlockAudio);
+    const onVisAudio = () => {
+      if (document.visibilityState === 'visible' && g.audio.started) g.audio.unlock();
+    };
+    document.addEventListener('visibilitychange', onVisAudio);
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('pagehide', flush);
     return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      document.removeEventListener('visibilitychange', onVisAudio);
+      document.removeEventListener('touchend', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
+      window.removeEventListener('pagehide', flush);
       g.stop();
       delete window.__wildkin;
     };
@@ -154,7 +192,8 @@ export default function App() {
   const selectKey = keyLabel(game?.options.selectKeys[0] ?? 'KeyN');
 
   return (
-    <div className={`page layout-${layout}`}>
+    <div className={`page layout-${layout}${layout === 'touch-portrait' && typeof window !== 'undefined' && window.innerHeight < COMPACT_PORTRAIT ? ' compact' : ''}`}>
+      {crash && <CrashScreen report={crash} />}
       <header className="topbar">
         <a className="brand" href="#top" onClick={focusGame}>
           <span className="brand-mark" aria-hidden>
@@ -205,13 +244,18 @@ export default function App() {
           {touch && (
             <div className="side side-left">
               <DPad game={game} />
+              {layout === 'touch-landscape' && (
+                <div className="meta-buttons">
+                  <PadButton game={game} btn="select" label="SELECT" className="pill" />
+                </div>
+              )}
             </div>
           )}
           <div className="center">
             <div className="screen" ref={screenRef}>
               <canvas ref={canvasRef} width={160} height={144} style={{ width: size, height: size * 0.9 }} aria-label="Wildkin game screen" />
             </div>
-            {touch && (
+            {layout === 'touch-portrait' && (
               <div className="meta-buttons">
                 <PadButton game={game} btn="select" label="SELECT" className="pill" />
                 <PadButton game={game} btn="start" label="START" className="pill" />
@@ -224,6 +268,11 @@ export default function App() {
                 <PadButton game={game} btn="b" label="B" className="round b" />
                 <PadButton game={game} btn="a" label="A" className="round a" />
               </div>
+              {layout === 'touch-landscape' && (
+                <div className="meta-buttons">
+                  <PadButton game={game} btn="start" label="START" className="pill" />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -280,7 +329,8 @@ export default function App() {
         <details>
           <summary>Does my progress save?</summary>
           <p>
-            Yes. Open the START menu and choose SAVE. Your game is stored in this browser, and CONTINUE appears on the title screen. To move a save
+            Yes. The game autosaves when you reach a new area, after story events and every couple of minutes (a small SAVED sign appears), and you can
+            also choose SAVE in the START menu. Your game is stored in this browser, and CONTINUE appears on the title screen. To move a save
             to another browser or device, open Controls &amp; saves and copy the save code.
           </p>
         </details>

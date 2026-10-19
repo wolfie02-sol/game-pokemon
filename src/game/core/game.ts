@@ -5,6 +5,10 @@ import { Rng } from './rng';
 import type { Modal, Scene } from './scene';
 import type { GameState, Options } from '../systems/state';
 import { loadOptions, saveOptions } from '../systems/save';
+import { Autosave } from '../systems/autosave';
+import { recordError, type ErrorReport } from './diagnostics';
+import { drawText } from './font';
+import { box } from './gfx';
 
 /** A clickable / hoverable rectangle in game-pixel coordinates, registered each frame. */
 export interface Region {
@@ -21,6 +25,8 @@ type PointerEv = { kind: 'move' | 'down' | 'back' | 'wheel'; x: number; y: numbe
 export interface GameHooks {
   /** Called whenever something the surrounding UI shows may have changed. */
   onChange?: () => void;
+  /** The game stopped on an error it could not recover from. */
+  onCrash?: (r: ErrorReport) => void;
 }
 
 /**
@@ -41,6 +47,13 @@ export class Game {
   private acc = 0;
   private detach: (() => void) | null = null;
   hooks: GameHooks = {};
+  readonly autosave = new Autosave();
+  /** Set by the game setup: try to get back to a playable state after an error. Returns false if it can't. */
+  recover: ((err: unknown) => boolean) | null = null;
+  crashed = false;
+  private errorFrames: number[] = [];
+  /** test hook: throw inside the next update ('once') or every update ('always') */
+  testThrow: 'once' | 'always' | null = null;
   /** Regions registered by the top scene during the last render. */
   private regions: Region[] = [];
   private nextRegions: Region[] = [];
@@ -220,21 +233,41 @@ export class Game {
       detachKeys();
       detachPointer();
     };
+    const onRejection = (e: PromiseRejectionEvent) => {
+      e.preventDefault();
+      this.reportError(e.reason, 'async');
+    };
+    window.addEventListener('unhandledrejection', onRejection);
+    const prevDetach = this.detach;
+    this.detach = () => {
+      prevDetach?.();
+      window.removeEventListener('unhandledrejection', onRejection);
+    };
     this.last = performance.now();
     const loop = (t: number) => {
+      if (this.crashed) return;
       this.raf = requestAnimationFrame(loop);
       const dt = Math.min(100, t - this.last);
       this.last = t;
       this.acc += dt;
       const stepMs = 1000 / 60;
       let steps = 0;
-      while (this.acc >= stepMs && steps < 4) {
-        this.step();
+      while (this.acc >= stepMs && steps < 4 && !this.crashed) {
+        try {
+          this.step();
+        } catch (e) {
+          this.reportError(e, 'update');
+        }
         this.acc -= stepMs;
         steps++;
       }
       if (steps === 4) this.acc = 0;
-      this.render();
+      if (this.crashed) return;
+      try {
+        this.render();
+      } catch (e) {
+        this.reportError(e, 'draw');
+      }
     };
     this.raf = requestAnimationFrame(loop);
   }
@@ -245,6 +278,46 @@ export class Game {
     this.audio.stop();
   }
 
+  /**
+   * Every error ends up here. The first couple are recovered from where
+   * possible (the event or battle is dropped and the player is put back in the
+   * overworld); repeated errors, or errors outside the overworld, stop the game
+   * and show the crash screen.
+   */
+  reportError(err: unknown, where: string) {
+    if (this.crashed) return;
+    const report = recordError(this, err, where);
+    this.errorFrames = this.errorFrames.filter((f) => this.frame - f < 600);
+    this.errorFrames.push(this.frame);
+    if (this.errorFrames.length <= 2 && this.recover) {
+      let ok = false;
+      try {
+        ok = this.recover(err);
+      } catch (e2) {
+        recordError(this, e2, 'recover');
+      }
+      if (ok) return;
+    }
+    this.crash(report);
+  }
+
+  private crash(report: ErrorReport) {
+    this.crashed = true;
+    cancelAnimationFrame(this.raf);
+    try {
+      this.audio.stop();
+    } catch {
+      /* ignore */
+    }
+    this.hooks.onCrash?.(report);
+  }
+
+  /** The page is being hidden or closed: save if it is a safe moment. */
+  flushAutosave(): boolean {
+    if (this.crashed) return false;
+    return this.autosave.flush(this.state, this.options.autosave, this.frame);
+  }
+
   /** Advance the simulation by exactly one frame (also used by tests). */
   step() {
     this.processPointer();
@@ -252,7 +325,14 @@ export class Game {
     this.frame++;
     if (this.state) this.state.playTime += 1 / 60;
     const top = this.top();
+    this.autosave.safeNow = false;
+    if (this.testThrow) {
+      const t = this.testThrow;
+      if (t === 'once') this.testThrow = null;
+      throw new Error('Test error (' + t + ')');
+    }
     top?.update();
+    this.autosave.tick(this.state, this.options.autosave, this.frame);
   }
 
   render() {
@@ -263,12 +343,29 @@ export class Game {
     ctx.fillRect(0, 0, W, H);
     this.nextRegions = [];
     for (let j = Math.max(0, i); j < this.scenes.length; j++) this.scenes[j].draw(ctx);
+    this.drawSaveNotice(ctx);
     this.regions = this.nextRegions;
     if (this.hovered && !this.regions.includes(this.hovered)) {
       // keep hover identity stable across frames (regions are rebuilt every draw)
       const h = this.hovered;
       this.hovered = this.regions.find((r) => r.x === h.x && r.y === h.y && r.w === h.w && r.h === h.h) ?? null;
     }
+  }
+
+  /** Small corner badge after an autosave (or a failed one). */
+  private drawSaveNotice(ctx: CanvasRenderingContext2D) {
+    const n = this.autosave.notice;
+    if (!n) return;
+    const age = this.frame - n.frame;
+    const life = n.kind === 'failed' ? 240 : 90;
+    if (age > life) {
+      this.autosave.notice = null;
+      return;
+    }
+    const text = n.kind === 'failed' ? 'SAVE FAILED' : 'SAVED';
+    const w = text.length * 6 + 12;
+    box(ctx, W - w - 2, 2, w, 14);
+    drawText(ctx, text, W - w + 4, 6, n.kind === 'failed' ? '#d04838' : UI.ink);
   }
 
   /** Characters revealed per frame for the current text speed. */

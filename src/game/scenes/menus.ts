@@ -280,17 +280,18 @@ export class OptionsScene extends Modal<void> {
       ['SOUND FX', o.sfx ? 'ON' : 'OFF'],
       ['BATTLE FX', o.battleAnim ? 'ON' : 'OFF'],
       ['CONTROLS', { auto: 'AUTO', touch: 'TOUCH', keys: 'KEYS' }[o.controls]],
+      ['AUTOSAVE', o.autosave ? 'ON' : 'OFF'],
       ['DONE', ''],
     ];
   }
   update() {
     const i = this.g.input;
     const o = this.g.options;
-    const n = 6;
+    const n = 7;
     if (i.repeat('up')) this.idx = (this.idx + n - 1) % n;
     if (i.repeat('down')) this.idx = (this.idx + 1) % n;
     const change = i.pressed('left') ? -1 : i.pressed('right') || i.pressed('a') ? 1 : 0;
-    if (i.pressed('b') || (i.pressed('a') && this.idx === 5)) {
+    if (i.pressed('b') || (i.pressed('a') && this.idx === 6)) {
       this.g.sfx('cancel');
       this.finish();
       return;
@@ -305,13 +306,14 @@ export class OptionsScene extends Modal<void> {
         const modes = ['auto', 'touch', 'keys'] as const;
         this.g.setOptions({ controls: modes[(modes.indexOf(o.controls) + change + 3) % 3] });
       }
+      if (this.idx === 5) this.g.setOptions({ autosave: !o.autosave });
     }
   }
   draw(c: CanvasRenderingContext2D) {
     rect(c, 0, 0, 160, 144, UI.paper);
     rect(c, 0, 0, 160, 12, '#3a3450');
     drawText(c, 'OPTIONS', 6, 2, '#ffffff');
-    box(c, 0, 14, 160, 84);
+    box(c, 0, 14, 160, 96);
     this.rows().forEach(([k, v], j) => {
       const y = 21 + j * 12;
       this.g.pick(this, 3, y - 3, 154, 12, () => this.idx !== j && ((this.idx = j), true), v ? 'right' : 'a');
@@ -319,11 +321,10 @@ export class OptionsScene extends Modal<void> {
       if (v) drawText(c, `◀ ${v} ▶`, 94, y, UI.accent);
       if (j === this.idx) cursor(c, 6, y);
     });
-    box(c, 0, 98, 160, 46);
+    box(c, 0, 110, 160, 34);
     const startK = this.g.options.startKeys.map(keyLabel).slice(0, 2).join('/');
-    drawText(c, 'Move: Arrows/WASD', 8, 103);
-    drawText(c, 'A: Z/Enter  B: X/Esc', 8, 112);
-    drawText(c, `START: ${startK}`.slice(0, 24), 8, 121);
-    drawText(c, 'Hold B to run', 8, 130, UI.muted);
+    drawText(c, 'A: Z/Enter  B: X/Esc', 8, 115);
+    drawText(c, `START: ${startK}`.slice(0, 24), 8, 124);
+    drawText(c, 'Hold B to run', 8, 133, UI.muted);
   }
 }

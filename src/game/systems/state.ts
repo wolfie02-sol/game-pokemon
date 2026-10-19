@@ -14,6 +14,8 @@ export interface Options {
   /** KeyboardEvent.code values bound to START and SELECT */
   startKeys: string[];
   selectKeys: string[];
+  /** save automatically at safe moments (new areas, story events, every few minutes) */
+  autosave: boolean;
 }
 
 export const DEFAULT_OPTIONS: Options = {
@@ -24,6 +26,7 @@ export const DEFAULT_OPTIONS: Options = {
   controls: 'auto',
   startKeys: ['KeyM', 'ShiftLeft', 'ShiftRight'],
   selectKeys: ['KeyN'],
+  autosave: true,
 };
 
 export interface GameState {
