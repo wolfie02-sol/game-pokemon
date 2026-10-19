@@ -21,7 +21,7 @@ await esbuild.build({
   nodePaths: ['/opt/npm-tools/node_modules'],
   define: { 'process.env.NODE_ENV': '"production"' },
   logLevel: 'warning',
-  keepNames: true,
+  keepNames: !process.argv.includes('--min'),
 });
 let html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 html = html.replace('<script type="module" src="/src/main.tsx"></script>', '<link rel="stylesheet" href="./assets/index.css" />\n    <script type="module" src="./assets/index.js"></script>');
