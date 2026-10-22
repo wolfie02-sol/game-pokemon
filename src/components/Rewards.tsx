@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import type { Game } from '../game';
-import { earnedMilestones, explorerTx, findWallet, type Me, type Rewards, type RewardsConfig, RewardsError } from '../rewards/client';
+import { strongestLevel } from '../game/systems/cardbosses';
+import { explorerTx, findWallet, oddsFor, type Me, type Rewards, type RewardsConfig, RewardsError } from '../rewards/client';
 
 const short = (a: string) => `${a.slice(0, 4)}…${a.slice(-4)}`;
 
-function untilText(ms: number): string {
-  const h = Math.ceil(ms / 3600_000);
-  return h <= 1 ? 'within the hour' : `in about ${h} hours`;
+function hoursText(sec: number): string {
+  const h = Math.ceil(sec / 3600);
+  return h <= 1 ? 'in under an hour' : `in about ${h} hours`;
 }
 
 const WIN_STATUS: Record<string, string> = {
@@ -16,8 +17,8 @@ const WIN_STATUS: Record<string, string> = {
   failed: 'Being retried',
 };
 
-/** The "Card rewards" panel: connect a wallet, see eligibility, odds and wins. */
-export function RewardsDialog({ game, rewards, onClose, onClaimed }: { game: Game; rewards: Rewards; onClose: () => void; onClaimed: () => void }) {
+/** The "Card rewards" panel: connect a wallet, see eligibility, today's battles, odds and wins. */
+export function RewardsDialog({ game, rewards, onClose }: { game: Game; rewards: Rewards; onClose: () => void }) {
   const [cfg, setCfg] = useState<RewardsConfig | null>(null);
   const [me, setMe] = useState<Me | null>(null);
   const [busy, setBusy] = useState(false);
@@ -26,8 +27,7 @@ export function RewardsDialog({ game, rewards, onClose, onClaimed }: { game: Gam
   const refresh = async () => {
     try {
       setCfg(await rewards.config());
-      if (rewards.connected) setMe(await rewards.me());
-      else setMe(null);
+      setMe(rewards.connected ? await rewards.me() : null);
     } catch (e) {
       setMsg(e instanceof RewardsError ? e.message : 'Something went wrong. Try again.');
       if (!rewards.connected) setMe(null);
@@ -43,7 +43,6 @@ export function RewardsDialog({ game, rewards, onClose, onClaimed }: { game: Gam
     setMsg('');
     try {
       await rewards.connect();
-      onClaimed();
       await refresh();
     } catch (e) {
       setMsg(e instanceof RewardsError ? e.message : 'Could not connect the wallet.');
@@ -58,7 +57,8 @@ export function RewardsDialog({ game, rewards, onClose, onClaimed }: { game: Gam
     setMsg('Wallet disconnected.');
   };
 
-  const earned = new Set(earnedMilestones(game.state));
+  const level = game.state ? strongestLevel(game.state) : 1;
+  const beaten = (id: string) => !!game.state?.flags['tr:' + id];
   const hasWallet = typeof window !== 'undefined' && !!findWallet();
   const need = cfg?.gate?.min ?? 0;
 
@@ -67,33 +67,44 @@ export function RewardsDialog({ game, rewards, onClose, onClaimed }: { game: Gam
       <div className="modal-card rewards" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
         <h2 id="rewards-title">Real card rewards</h2>
         <p>
-          Earning badges and becoming CHAMPION can drop a real, graded trading card from <b>Collector Crypt</b> into your Solana wallet. Each milestone gives you one
-          chance, and the chance grows the further you get.
+          Beat a gym leader, an Elite Four member or the Champion, then talk to them again for a <b>CARD CHALLENGE</b>: a rematch with a team that grows with your
+          level. Win, and you might get a real, graded trading card from <b>Collector Crypt</b>. Tougher bosses and higher levels mean better odds.
         </p>
         {cfg?.cluster && cfg.cluster !== 'mainnet-beta' && <p className="rw-test">Test mode ({cfg.cluster}): rewards are practice cards with no real value.</p>}
 
         <h3>Your wallet</h3>
         {me ? (
-          <div className="rw-row">
-            <span>
-              <b>{short(me.wallet)}</b>
-              {cfg?.gate ? (
-                <>
-                  {' · '}
-                  {me.balance === null ? '…' : me.balance.toLocaleString()} / {need.toLocaleString()} tokens{' '}
-                  <span className={me.eligible ? 'rw-ok' : 'rw-bad'}>{me.eligible ? 'Eligible' : 'Not enough tokens'}</span>
-                </>
-              ) : (
-                <span className="rw-ok"> · Eligible</span>
-              )}
-            </span>
-            <button type="button" className="pill-btn ghost" onClick={disconnect}>
-              Disconnect
-            </button>
-          </div>
+          <>
+            <div className="rw-row">
+              <span>
+                <b>{short(me.wallet)}</b>
+                {cfg?.gate ? (
+                  <>
+                    {' · '}
+                    {me.balance === null ? '…' : me.balance.toLocaleString()} / {need.toLocaleString()} tokens{' '}
+                    <span className={me.eligible ? 'rw-ok' : 'rw-bad'}>{me.eligible ? 'Eligible' : 'Not enough tokens'}</span>
+                  </>
+                ) : (
+                  <span className="rw-ok"> · Eligible</span>
+                )}
+              </span>
+              <button type="button" className="pill-btn ghost" onClick={disconnect}>
+                Disconnect
+              </button>
+            </div>
+            <p className="rw-today">
+              <b>
+                {me.left} of {me.limit}
+              </b>{' '}
+              card battles left today{me.left < me.limit ? ` · more ${hoursText(me.resetsInSec)}` : ''}
+            </p>
+          </>
         ) : (
           <>
-            <p>{cfg?.gate ? `To take part, connect a Solana wallet holding at least ${need.toLocaleString()} tokens.` : 'Connect a Solana wallet to take part.'} Connecting only proves you own the wallet; it never moves funds.</p>
+            <p>
+              {cfg?.gate ? `To take part, connect a Solana wallet holding at least ${need.toLocaleString()} tokens.` : 'Connect a Solana wallet to take part.'} Connecting
+              only proves you own the wallet; it never moves funds.
+            </p>
             <button type="button" className="pill-btn" onClick={connect} disabled={busy || !hasWallet}>
               {busy ? 'Check your wallet…' : 'Connect wallet'}
             </button>
@@ -103,22 +114,17 @@ export function RewardsDialog({ game, rewards, onClose, onClaimed }: { game: Gam
 
         {cfg && (
           <>
-            <h3>Chances</h3>
+            <h3>Card bosses</h3>
+            <p className="rw-note rw-tight">Chance per win with your strongest Wildkin at level {level}.</p>
             <table className="rw-table">
               <tbody>
-                {cfg.milestones.map((m) => {
-                  const claimed = me?.claimed.includes(m.id);
-                  const next = me?.next.find((n) => n.id === m.id);
-                  const wait = next?.readyAt && next.readyAt > Date.now() ? next.readyAt - Date.now() : 0;
-                  const state = claimed ? 'Rolled' : !earned.has(m.id) ? 'Not reached' : !me ? 'Reached' : wait ? `Rolls ${untilText(wait)}` : 'Rolling…';
-                  return (
-                    <tr key={m.id}>
-                      <td>{m.label}</td>
-                      <td className="rw-num">{m.odds}%</td>
-                      <td className={claimed ? 'rw-muted' : earned.has(m.id) ? 'rw-ok' : 'rw-muted'}>{state}</td>
-                    </tr>
-                  );
-                })}
+                {cfg.bosses.map((b) => (
+                  <tr key={b.id}>
+                    <td>{b.label}</td>
+                    <td className="rw-num">{oddsFor(cfg, b, level)}%</td>
+                    <td className={beaten(b.id) ? 'rw-ok' : 'rw-muted'}>{beaten(b.id) ? 'Ready' : 'Beat them first'}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </>
@@ -146,8 +152,9 @@ export function RewardsDialog({ game, rewards, onClose, onClaimed }: { game: Gam
         )}
 
         <p className="rw-note">
-          Wins are checked by hand before a card is sent, and each wallet can win at most one card. To get the physical card, redeem it on Collector Crypt (they charge
-          shipping and a small fee). Rolls are tied to your wallet, not your save, so each milestone only counts once.
+          Each wallet gets {cfg?.battlesPerDay ?? 5} card battles a day, and every battle counts, win or lose. The count resets at midnight (Toronto time). Wins are
+          checked by hand before a card is sent, and each wallet can win at most one card. To get the physical card, redeem it on Collector Crypt (they charge
+          shipping and a small fee).
         </p>
         {msg && (
           <p className="rw-msg" role="status">
@@ -162,7 +169,7 @@ export function RewardsDialog({ game, rewards, onClose, onClaimed }: { game: Gam
   );
 }
 
-/** Shown when a milestone roll wins a card. */
+/** Shown when a card battle wins a card. */
 export function WinDialog({ card, onClose }: { card: string; onClose: () => void }) {
   return (
     <div className="modal" role="dialog" aria-modal="true" aria-labelledby="win-title" onClick={onClose}>

@@ -22,13 +22,15 @@ export interface Region {
 
 type PointerEv = { kind: 'move' | 'down' | 'back' | 'wheel'; x: number; y: number; dy?: number };
 
+import type { CardHooks } from '../systems/cardbosses';
+
 export interface GameHooks {
   /** Called whenever something the surrounding UI shows may have changed. */
   onChange?: () => void;
   /** The game stopped on an error it could not recover from. */
   onCrash?: (r: ErrorReport) => void;
-  /** The player reached a story milestone ('badge:<NAME>' or 'champion'). Used by card rewards. */
-  onMilestone?: (id: string) => void;
+  /** Card rewards: set by the page when the rewards server is configured. */
+  cards?: CardHooks;
 }
 
 /**

@@ -23,6 +23,8 @@ import { ShopScene } from './shop';
 import { StartMenu } from './startmenu';
 import { StorageScene } from './storage';
 import { battleTransition } from './transition';
+import { isCardBoss } from '../systems/cardbosses';
+import { cardChallenge } from '../world/cardchallenge';
 
 /** NPC looks drawn as a creature instead of a person. */
 const MON_LOOKS: Record<string, string> = {
@@ -756,6 +758,9 @@ export class Overworld extends Scene {
           await this.trainerTalk(c, n);
           return;
         }
+        // beaten leaders offer a CARD CHALLENGE when card rewards are on
+        const cards = this.g.hooks.cards;
+        if (cards && isCardBoss(d.trainer) && (await cardChallenge(c, d.trainer, cards))) return;
         if (!d.talk) {
           await c.say(t.after);
           return;
@@ -942,7 +947,8 @@ export class Overworld extends Scene {
           const m = newMon(s, sp, lvl, g.rng, t.name);
           // bosses bring considered, legal move sets (league members also know TM moves)
           if (t.smart) {
-            const set = bossMoveset(sp, lvl, /^champ$/.test(t.id));
+            // the champion, and league rematches in card challenges, also know TM moves
+            const set = bossMoveset(sp, lvl, /^champ$/.test(t.id) || /^card:(champ|e4_\d)$/.test(t.id));
             if (set) m.moves = set.map((mid) => ({ id: mid, pp: moveDef(mid).pp }));
           }
           return m;
@@ -1044,7 +1050,6 @@ export class Overworld extends Scene {
         if (!s.badges.includes(name)) s.badges.push(name);
         g.sfx('levelup');
         await say(g, `{PLAYER} received the ${name} BADGE!`);
-        g.hooks.onMilestone?.('badge:' + name);
       },
       async flash() {
         ow.flashT = 12;

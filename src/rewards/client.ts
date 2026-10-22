@@ -8,25 +8,32 @@ const env = (import.meta as unknown as { env?: Record<string, string | undefined
 export const REWARDS_API = (env.VITE_REWARDS_API ?? '').replace(/\/$/, '');
 export const rewardsEnabled = REWARDS_API !== '';
 
-export interface Milestone { id: string; label: string; odds: number }
-export interface RewardsConfig { cluster: string; gate: { mint: string; min: number } | null; milestones: Milestone[] }
-export interface Win { id: number; milestone: string; card: string | null; status: 'pending' | 'sent' | 'rejected' | 'failed'; tx: string | null }
+export interface Boss { id: string; label: string; odds: number }
+export interface RewardsConfig {
+  cluster: string;
+  gate: { mint: string; min: number } | null;
+  battlesPerDay: number;
+  odds: { perLevel: number; cap: number };
+  bosses: Boss[];
+}
+export interface Win { id: number; boss: string; card: string | null; status: 'pending' | 'sent' | 'rejected' | 'failed'; tx: string | null }
 export interface Me {
   wallet: string;
   eligible: boolean;
   balance: number | null;
   need: number;
-  claimed: string[];
+  used: number;
+  left: number;
+  limit: number;
+  resetsInSec: number;
   wins: Win[];
-  next: (Milestone & { readyAt: number | null })[];
 }
-export interface ClaimResult {
-  milestone: string;
-  label: string;
-  status: 'rolled' | 'already' | 'wait' | 'ineligible';
-  won: boolean;
-  card?: string;
-  retryAfterSec?: number;
+export interface Preview { odds: number; left: number; limit: number; eligible: boolean; need: number; resetsInSec: number }
+
+/** Same formula as the server: the boss's base chance plus a bonus per level, capped. */
+export function oddsFor(cfg: RewardsConfig, boss: Boss, level: number): number {
+  const lv = Math.max(1, Math.min(100, Math.floor(level)));
+  return Math.round(Math.min(cfg.odds.cap, boss.odds + lv * cfg.odds.perLevel) * 100) / 100;
 }
 
 interface WalletProvider {
@@ -176,20 +183,18 @@ export class Rewards {
     return this.authed('/api/me');
   }
 
-  /** Sends every milestone the save has reached; the server rolls each one once. */
-  async claim(milestones: string[]): Promise<ClaimResult[]> {
-    if (!milestones.length) return [];
-    const { results } = await this.authed<{ results: ClaimResult[] }>('/api/claim', { method: 'POST', body: { milestones } });
-    return results;
+  preview(boss: string, level: number): Promise<Preview> {
+    return this.authed(`/api/battle/preview?boss=${encodeURIComponent(boss)}&level=${Math.floor(level)}`);
   }
-}
 
-/** Milestones the current save has reached, in the server's id format. */
-export function earnedMilestones(state: { badges: string[]; flags: Record<string, boolean> } | null): string[] {
-  if (!state) return [];
-  const ids = state.badges.map((b) => `badge:${b}`);
-  if (state.flags.champion) ids.push('champion');
-  return ids;
+  /** Starts a card battle; uses one of today's battles. */
+  start(boss: string, level: number): Promise<{ battleId: number; left: number; limit: number }> {
+    return this.authed('/api/battle/start', { method: 'POST', body: { boss, level } });
+  }
+
+  finish(battleId: number, won: boolean): Promise<{ won: boolean; card?: string; note?: string }> {
+    return this.authed('/api/battle/finish', { method: 'POST', body: { battleId, won } });
+  }
 }
 
 export function explorerTx(tx: string, cluster: string): string {

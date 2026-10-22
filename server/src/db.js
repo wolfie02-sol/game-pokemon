@@ -6,16 +6,17 @@ import { DatabaseSync } from 'node:sqlite';
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS nonces (wallet TEXT NOT NULL, nonce TEXT NOT NULL, exp INTEGER NOT NULL, PRIMARY KEY (wallet, nonce));
 CREATE TABLE IF NOT EXISTS wallets (wallet TEXT PRIMARY KEY, first_seen INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS rolls (
-  wallet TEXT NOT NULL, milestone TEXT NOT NULL, rolled_at INTEGER NOT NULL,
-  roll REAL NOT NULL, odds REAL NOT NULL, won INTEGER NOT NULL, note TEXT,
-  PRIMARY KEY (wallet, milestone)
+CREATE TABLE IF NOT EXISTS battles (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, wallet TEXT NOT NULL, boss TEXT NOT NULL, level INTEGER NOT NULL,
+  odds REAL NOT NULL, day TEXT NOT NULL, started_at INTEGER NOT NULL,
+  finished_at INTEGER, won_fight INTEGER, roll REAL, won_card INTEGER, note TEXT
 );
+CREATE INDEX IF NOT EXISTS battles_wallet_day ON battles (wallet, day);
 CREATE TABLE IF NOT EXISTS cards (
   mint TEXT PRIMARY KEY, name TEXT NOT NULL, value_usd REAL, status TEXT NOT NULL DEFAULT 'available', added_at INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS wins (
-  id INTEGER PRIMARY KEY AUTOINCREMENT, wallet TEXT NOT NULL, milestone TEXT NOT NULL, mint TEXT NOT NULL,
+  id INTEGER PRIMARY KEY AUTOINCREMENT, wallet TEXT NOT NULL, boss TEXT NOT NULL, battle_id INTEGER, mint TEXT NOT NULL,
   status TEXT NOT NULL, created_at INTEGER NOT NULL, decided_at INTEGER, tx TEXT, error TEXT
 );
 `;
@@ -61,23 +62,27 @@ export function openDb(file) {
       return q('SELECT first_seen FROM wallets WHERE wallet = ?').get(wallet)?.first_seen ?? null;
     },
 
-    // ── rolls and wins ──
-    rollsFor(wallet) {
-      return q('SELECT milestone, rolled_at, won FROM rolls WHERE wallet = ?').all(wallet);
+    // ── battles and wins ──
+    battlesOn(wallet, day) {
+      return q('SELECT COUNT(*) AS n FROM battles WHERE wallet = ? AND day = ?').get(wallet, day).n;
     },
-    hasRolled(wallet, milestone) {
-      return !!q('SELECT 1 FROM rolls WHERE wallet = ? AND milestone = ?').get(wallet, milestone);
+    startBattle(b) {
+      const r = q('INSERT INTO battles (wallet, boss, level, odds, day, started_at) VALUES (?, ?, ?, ?, ?, ?)').run(b.wallet, b.boss, b.level, b.odds, b.day, b.startedAt);
+      return Number(r.lastInsertRowid);
     },
-    insertRoll(r) {
-      q('INSERT INTO rolls (wallet, milestone, rolled_at, roll, odds, won, note) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-        r.wallet, r.milestone, r.rolledAt, r.roll, r.odds, r.won ? 1 : 0, r.note ?? null,
+    getBattle(id) {
+      return q('SELECT * FROM battles WHERE id = ?').get(id);
+    },
+    finishBattle(id, f) {
+      q('UPDATE battles SET finished_at = ?, won_fight = ?, roll = ?, won_card = ?, note = ? WHERE id = ? AND finished_at IS NULL').run(
+        f.finishedAt, f.wonFight ? 1 : 0, f.roll ?? null, f.wonCard ? 1 : 0, f.note ?? null, id,
       );
     },
     winsToday() {
       return q("SELECT COUNT(*) AS n FROM wins WHERE created_at >= ? AND status != 'rejected'").get(Date.now() - 86400000).n;
     },
     winsForWallet(wallet) {
-      return q("SELECT w.id, w.milestone, w.status, w.created_at, w.tx, c.name AS card FROM wins w LEFT JOIN cards c ON c.mint = w.mint WHERE w.wallet = ? ORDER BY w.id DESC").all(wallet);
+      return q("SELECT w.id, w.boss, w.status, w.created_at, w.tx, c.name AS card FROM wins w LEFT JOIN cards c ON c.mint = w.mint WHERE w.wallet = ? ORDER BY w.id DESC").all(wallet);
     },
     countWinsForWallet(wallet) {
       return q("SELECT COUNT(*) AS n FROM wins WHERE wallet = ? AND status != 'rejected'").get(wallet).n;
@@ -88,8 +93,8 @@ export function openDb(file) {
       q("UPDATE cards SET status = 'reserved' WHERE mint = ?").run(card.mint);
       return card;
     },
-    createWin(wallet, milestone, mint) {
-      const r = q("INSERT INTO wins (wallet, milestone, mint, status, created_at) VALUES (?, ?, ?, 'pending', ?)").run(wallet, milestone, mint, Date.now());
+    createWin(wallet, boss, battleId, mint) {
+      const r = q("INSERT INTO wins (wallet, boss, battle_id, mint, status, created_at) VALUES (?, ?, ?, ?, 'pending', ?)").run(wallet, boss, battleId, mint, Date.now());
       return Number(r.lastInsertRowid);
     },
 
@@ -123,7 +128,8 @@ export function openDb(file) {
     stats() {
       return {
         players: q('SELECT COUNT(*) AS n FROM wallets').get().n,
-        rolls: q('SELECT COUNT(*) AS n FROM rolls').get().n,
+        battles: q('SELECT COUNT(*) AS n FROM battles').get().n,
+        battlesToday: q('SELECT COUNT(*) AS n FROM battles WHERE started_at >= ?').get(Date.now() - 86400000).n,
         pending: q("SELECT COUNT(*) AS n FROM wins WHERE status = 'pending'").get().n,
         sent: q("SELECT COUNT(*) AS n FROM wins WHERE status = 'sent'").get().n,
         cardsAvailable: q("SELECT COUNT(*) AS n FROM cards WHERE status = 'available'").get().n,

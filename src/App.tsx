@@ -3,7 +3,7 @@ import { DPad, PadButton } from './components/Controls';
 import { Roster } from './components/Roster';
 import { SettingsDialog } from './components/Settings';
 import { RewardsDialog, WinDialog } from './components/Rewards';
-import { earnedMilestones, Rewards, rewardsEnabled } from './rewards/client';
+import { Rewards, RewardsError, rewardsEnabled } from './rewards/client';
 import { CrashScreen } from './components/CrashScreen';
 import type { ErrorReport } from './game/core/diagnostics';
 import { recordError } from './game/core/diagnostics';
@@ -70,7 +70,6 @@ export default function App() {
   const [dialog, setDialog] = useState<null | 'how' | 'settings' | 'rewards' | 'win'>(null);
   const [rewards] = useState(() => new Rewards());
   const [wonCard, setWonCard] = useState('');
-  const claimRef = useRef<(force?: boolean) => void>(() => {});
   const [crash, setCrash] = useState<ErrorReport | null>(null);
 
   // boot the shared engine once
@@ -86,7 +85,6 @@ export default function App() {
     }
     g.hooks.onChange = () => setRev((n) => n + 1);
     g.hooks.onCrash = (r) => setCrash(r);
-    g.hooks.onMilestone = () => claimRef.current?.(true);
     window.__wildkin = g;
     setGame(g);
     // save at a safe moment when the tab is hidden, switched away from or closed
@@ -117,35 +115,34 @@ export default function App() {
     };
   }, []);
 
-  // Card rewards: send reached milestones to the server, which rolls each one once per wallet.
-  const lastClaim = useRef({ key: '', at: 0 });
-  claimRef.current = (force = false) => {
-    if (!rewardsEnabled || !game || !rewards.connected) return;
-    const ids = earnedMilestones(game.state);
-    const key = ids.join(',');
-    const prev = lastClaim.current;
-    if (!ids.length || (!force && prev && key === prev.key && Date.now() - prev.at < 10 * 60_000)) return;
-    lastClaim.current = { key, at: Date.now() };
-    rewards
-      .claim(ids)
-      .then((results) => {
-        const win = results.find((r) => r.won && r.status === 'rolled');
-        if (win) {
-          setWonCard(win.card ?? 'a real card');
+  // Card rewards: let beaten leaders offer CARD CHALLENGES through the rewards server.
+  useEffect(() => {
+    if (!game || !rewardsEnabled) return;
+    const needWallet = () => {
+      if (!rewards.connected) throw new RewardsError('Connect your wallet under CARD REWARDS at the top of the page to take on card challenges.');
+    };
+    game.hooks.cards = {
+      preview: async (boss, level) => {
+        needWallet();
+        return rewards.preview(boss, level);
+      },
+      start: async (boss, level) => {
+        needWallet();
+        return rewards.start(boss, level);
+      },
+      finish: async (battleId, won) => {
+        const r = await rewards.finish(battleId, won);
+        if (r.won) {
+          setWonCard(r.card ?? 'a real card');
           setDialog('win');
         }
-      })
-      .catch(() => {
-        // offline or not eligible right now: the next milestone or check tries again
-      });
-  };
-  useEffect(() => {
-    claimRef.current?.();
-  }, [game, rev]);
-  useEffect(() => {
-    const t = window.setInterval(() => claimRef.current?.(), 10 * 60_000);
-    return () => window.clearInterval(t);
-  }, []);
+        return r;
+      },
+    };
+    return () => {
+      delete game.hooks.cards;
+    };
+  }, [game, rewards]);
 
   const mode = game?.options.controls ?? 'auto';
 
@@ -429,7 +426,7 @@ export default function App() {
         </div>
       )}
       {dialog === 'settings' && game && <SettingsDialog game={game} layout={layout} onClose={() => setDialog(null)} />}
-      {dialog === 'rewards' && game && <RewardsDialog game={game} rewards={rewards} onClose={() => setDialog(null)} onClaimed={() => claimRef.current?.(true)} />}
+      {dialog === 'rewards' && game && <RewardsDialog game={game} rewards={rewards} onClose={() => setDialog(null)} />}
       {dialog === 'win' && <WinDialog card={wonCard} onClose={() => setDialog(null)} />}
     </div>
   );

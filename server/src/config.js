@@ -31,8 +31,14 @@ export const config = {
 
   dbPath: env('DB_PATH', './data/rewards.db'),
 
-  /** Testing only: multiplies every milestone's waiting time (0 = no wait). Keep at 1 for real use. */
-  timeScale: num('MILESTONE_TIME_SCALE', 1),
+  /** Card battles each wallet may start per day (every attempt counts, win or lose). */
+  battlesPerDay: num('BATTLES_PER_DAY', 5),
+  /** The day resets at midnight in this time zone. */
+  timeZone: env('DAY_TIME_ZONE', 'America/Toronto'),
+  /** A won battle only counts if it lasted at least this long (anti-cheat). Testing can set 0. */
+  minBattleSeconds: num('MIN_BATTLE_SECONDS', 45),
+  /** A battle must be finished within this many minutes of starting. */
+  maxBattleMinutes: num('MAX_BATTLE_MINUTES', 60),
 
   /** Safety limits */
   maxWinsPerDay: num('MAX_WINS_PER_DAY', 3),
@@ -40,24 +46,40 @@ export const config = {
 };
 
 /**
- * Milestones that can drop a card, in story order. Each wallet gets exactly one
- * roll per milestone, ever. Odds are in percent and grow as the player goes further.
- *
- * `minHours` is anti-cheat: the wallet must have first signed in at least this many
- * hours before it can roll for this milestone, so nobody can fake a full playthrough
- * in five minutes. Tune these to how long the game really takes.
+ * The card bosses: rematches of the gym leaders, Elite Four and Champion.
+ * `odds` is the base chance (in percent) of a card for winning the rematch.
+ * Later bosses have better odds; the player's level adds a bonus on top (see ODDS).
  */
-export const MILESTONES = [
-  { id: 'badge:BOULDER', label: 'Boulder Badge', odds: 0.5, minHours: 0.5 },
-  { id: 'badge:RIPPLE', label: 'Ripple Badge', odds: 0.75, minHours: 1.5 },
-  { id: 'badge:SPARK', label: 'Spark Badge', odds: 1, minHours: 3 },
-  { id: 'badge:BLOOM', label: 'Bloom Badge', odds: 1.5, minHours: 4.5 },
-  { id: 'badge:VENOM', label: 'Venom Badge', odds: 2, minHours: 6 },
-  { id: 'badge:MIND', label: 'Mind Badge', odds: 2.5, minHours: 7.5 },
-  { id: 'badge:CINDER', label: 'Cinder Badge', odds: 3, minHours: 9 },
-  { id: 'badge:FROST', label: 'Frost Badge', odds: 4, minHours: 10.5 },
-  { id: 'champion', label: 'Became Champion', odds: 8, minHours: 13 },
+export const BOSSES = [
+  { id: 'g1', label: 'Garrick (Brindle Gym)', odds: 0.1 },
+  { id: 'g2', label: 'Nerissa (Ripple Gym)', odds: 0.15 },
+  { id: 'g3', label: 'Cass (Spark Gym)', odds: 0.2 },
+  { id: 'g4', label: 'Mossa (Bloom Gym)', odds: 0.3 },
+  { id: 'g5', label: 'Silas (Venom Gym)', odds: 0.4 },
+  { id: 'g6', label: 'Orin (Mind Gym)', odds: 0.5 },
+  { id: 'g7', label: 'Vulk (Cinder Gym)', odds: 0.6 },
+  { id: 'g8', label: 'Isolde (Frost Gym)', odds: 0.75 },
+  { id: 'e4_1', label: 'Thorne (Elite Four)', odds: 1 },
+  { id: 'e4_2', label: 'Wren (Elite Four)', odds: 1.1 },
+  { id: 'e4_3', label: 'Morrigan (Elite Four)', odds: 1.2 },
+  { id: 'e4_4', label: 'Vesper (Elite Four)', odds: 1.3 },
+  { id: 'champ', label: 'Elowen (Champion)', odds: 1.5 },
 ];
+
+export const ODDS = {
+  /** Extra chance (percent) per level of the player's strongest Wildkin. Level 50 adds 1%. */
+  perLevel: 0.02,
+  /** Highest level the game allows; reported levels above this are ignored. */
+  maxLevel: 100,
+  /** No battle ever has a better chance than this (percent). */
+  cap: 3,
+};
+
+/** Chance (percent) of a card for beating `boss` with a team whose best Wildkin is `level`. */
+export function oddsFor(boss, level) {
+  const lv = Math.max(1, Math.min(ODDS.maxLevel, Math.floor(Number(level) || 1)));
+  return Math.round(Math.min(ODDS.cap, boss.odds + lv * ODDS.perLevel) * 100) / 100;
+}
 
 export function checkConfig() {
   const problems = [];
@@ -66,7 +88,7 @@ export function checkConfig() {
     if (config.sessionSecret === 'dev-only-change-me') problems.push('Set SESSION_SECRET to a long random string.');
     if (config.adminPassword === 'dev-admin') problems.push('Set ADMIN_PASSWORD to something strong.');
     if (!config.gateMint) problems.push('GATE_MINT is empty, so the token gate is OFF. Set it once your token launches.');
-    if (config.timeScale !== 1) problems.push('MILESTONE_TIME_SCALE is not 1, so the anti-cheat waiting times are shortened.');
+    if (config.minBattleSeconds < 30) problems.push('MIN_BATTLE_SECONDS is very low, so faked battles are easier.');
   }
   return problems;
 }

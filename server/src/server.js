@@ -5,9 +5,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HttpError, issueSession, makeChallenge, readSession, safeEqual, verifyChallenge } from './auth.js';
 import { isAddress } from './base58.js';
-import { checkConfig, config as defaultConfig, MILESTONES } from './config.js';
+import { BOSSES, checkConfig, config as defaultConfig, ODDS } from './config.js';
 import { openDb } from './db.js';
-import { approveWin, checkGate, claimMilestone, rejectWin } from './rewards.js';
+import { approveWin, checkGate, dailyStatus, finishBattle, previewBattle, rejectWin, startBattle } from './rewards.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -51,7 +51,7 @@ async function readJson(req) {
   }
 }
 
-export function createApp({ config, db, chain, milestones = MILESTONES, roll }) {
+export function createApp({ config, db, chain, bosses = BOSSES, roll }) {
   const allow = limiter();
   const adminHtml = fs.readFileSync(path.join(here, '..', 'admin.html'), 'utf8');
 
@@ -61,7 +61,9 @@ export function createApp({ config, db, chain, milestones = MILESTONES, roll }) 
     ['GET', /^\/api\/config$/, async () => ({
       cluster: config.cluster,
       gate: config.gateMint ? { mint: config.gateMint, min: config.gateMin } : null,
-      milestones: milestones.map(({ id, label, odds }) => ({ id, label, odds })),
+      battlesPerDay: config.battlesPerDay,
+      odds: { perLevel: ODDS.perLevel, cap: ODDS.cap },
+      bosses: bosses.map(({ id, label, odds }) => ({ id, label, odds })),
     })],
 
     ['POST', /^\/api\/auth\/challenge$/, async ({ body }) => makeChallenge(db, body.wallet)],
@@ -74,33 +76,24 @@ export function createApp({ config, db, chain, milestones = MILESTONES, roll }) 
 
     ['GET', /^\/api\/me$/, async ({ wallet }) => {
       const gate = await checkGate({ chain, config, wallet });
-      const rolls = db.rollsFor(wallet);
-      const first = db.firstSeen(wallet);
       return {
         wallet,
         eligible: gate.ok,
         balance: gate.balance,
         need: gate.need,
-        claimed: rolls.map((r) => r.milestone),
-        wins: db.winsForWallet(wallet).map((w) => ({ id: w.id, milestone: w.milestone, card: w.card, status: w.status, tx: w.tx })),
-        next: milestones
-          .filter((m) => !rolls.some((r) => r.milestone === m.id))
-          .map((m) => ({ id: m.id, label: m.label, odds: m.odds, readyAt: first ? first + m.minHours * 3600_000 * (config.timeScale ?? 1) : null })),
+        ...dailyStatus({ db, config, wallet }),
+        wins: db.winsForWallet(wallet).map((w) => ({ id: w.id, boss: w.boss, card: w.card, status: w.status, tx: w.tx })),
       };
     }, { auth: true }],
 
-    ['POST', /^\/api\/claim$/, async ({ wallet, body }) => {
-      const ids = Array.isArray(body.milestones) ? body.milestones.filter((x) => typeof x === 'string').slice(0, milestones.length) : [];
-      // claim in story order, stopping at the first milestone that can't be claimed yet
-      const ordered = milestones.filter((m) => ids.includes(m.id));
-      const results = [];
-      for (const m of ordered) {
-        const r = await claimMilestone({ db, chain, config, milestones, wallet, milestoneId: m.id, ...(roll ? { roll } : {}) });
-        results.push({ milestone: m.id, label: m.label, ...r });
-        if (r.status === 'wait' || r.status === 'ineligible') break;
-      }
-      return { results };
-    }, { auth: true, limit: 10 }],
+    ['GET', /^\/api\/battle\/preview$/, async ({ wallet, url }) =>
+      previewBattle({ db, chain, config, bosses, wallet, bossId: url.searchParams.get('boss'), level: url.searchParams.get('level') }), { auth: true }],
+
+    ['POST', /^\/api\/battle\/start$/, async ({ wallet, body }) =>
+      startBattle({ db, chain, config, bosses, wallet, bossId: body.boss, level: body.level }), { auth: true, limit: 20 }],
+
+    ['POST', /^\/api\/battle\/finish$/, async ({ wallet, body }) =>
+      finishBattle({ db, config, wallet, battleId: body.battleId, wonFight: body.won === true, ...(roll ? { roll } : {}) }), { auth: true, limit: 20 }],
 
     // ── admin ──
     ['GET', /^\/admin\/?$/, async () => ({ __html: adminHtml })],
@@ -114,7 +107,10 @@ export function createApp({ config, db, chain, milestones = MILESTONES, roll }) 
       stats: db.stats(),
       wins: db.listWins(),
       cards: db.listCards(),
-      milestones,
+      bosses,
+      odds: ODDS,
+      battlesPerDay: config.battlesPerDay,
+      timeZone: config.timeZone,
     }), { admin: true }],
 
     ['POST', /^\/api\/admin\/cards$/, async ({ body }) => {

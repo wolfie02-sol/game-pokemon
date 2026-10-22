@@ -1054,3 +1054,10 @@ kbd {
 .rw-nav {
   white-space: nowrap;
 }
+.rewards .rw-today {
+  margin: 8px 0 0;
+  color: var(--ink);
+}
+.rewards .rw-tight {
+  margin: 0 0 6px;
+}

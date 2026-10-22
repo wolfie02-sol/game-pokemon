@@ -74,7 +74,7 @@
   </section>
 
   <section>
-    <h2>Drop odds</h2>
+    <h2>Card bosses and odds</h2>
     <div class="scroll"><table id="odds"></table></div>
   </section>
   <p id="msg"></p>
@@ -86,6 +86,9 @@ try { pw = sessionStorage.getItem('adminpw') || ''; } catch {}
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const when = (t) => (t ? new Date(t).toLocaleString() : '');
+let BOSSES = [];
+const bossName = (id) => (BOSSES.find((b) => b.id === id) || { label: id }).label;
+const oddsAt = (b, lv, o) => Math.round(Math.min(o.cap, b.odds + lv * o.perLevel) * 100) / 100;
 const short = (a) => (a ? a.slice(0, 4) + '…' + a.slice(-4) : '');
 
 async function api(path, opts = {}) {
@@ -98,18 +101,19 @@ function say(text, err) { $('msg').textContent = text; $('msg').className = err 
 
 async function load() {
   const d = await api('/api/admin/overview');
+  BOSSES = d.bosses;
   $('login').hidden = true; $('app').hidden = false;
   $('sub').textContent = 'Chain: ' + d.chain + (d.gate ? ' · Token gate: ' + d.gate.min.toLocaleString() + ' tokens' : ' · Token gate OFF');
   $('prizeWallet').textContent = d.prizeWallet;
   const s = d.stats;
-  $('stats').innerHTML = [['Players', s.players], ['Rolls', s.rolls], ['Pending', s.pending], ['Sent', s.sent], ['Cards in stock', s.cardsAvailable]]
+  $('stats').innerHTML = [['Players', s.players], ['Battles (24 h)', s.battlesToday], ['Battles (all)', s.battles], ['Pending', s.pending], ['Sent', s.sent], ['Cards in stock', s.cardsAvailable]]
     .map(([l, v]) => '<div class="stat"><b>' + v + '</b><span class="muted">' + l + '</span></div>').join('');
   $('warnings').innerHTML = d.warnings.map((w) => '<li>' + esc(w) + '</li>').join('');
 
   const pending = d.wins.filter((w) => w.status === 'pending' || w.status === 'failed');
   $('pending').innerHTML = pending.length
-    ? '<tr><th>#</th><th>Wallet</th><th>Milestone</th><th>Card</th><th>Won</th><th></th></tr>' + pending.map((w) =>
-        '<tr><td>' + w.id + '</td><td><code>' + esc(w.wallet) + '</code></td><td>' + esc(w.milestone) + '</td><td>' + esc(w.card) +
+    ? '<tr><th>#</th><th>Wallet</th><th>Boss</th><th>Card</th><th>Won</th><th></th></tr>' + pending.map((w) =>
+        '<tr><td>' + w.id + '</td><td><code>' + esc(w.wallet) + '</code></td><td>' + esc(bossName(w.boss)) + '</td><td>' + esc(w.card) +
         (w.value_usd ? ' ($' + w.value_usd + ')' : '') + (w.error ? '<br><span class="warn">' + esc(w.error) + '</span>' : '') + '</td><td>' + when(w.created_at) +
         '</td><td><button class="go" data-act="approve" data-id="' + w.id + '">Send card</button> <button class="no" data-act="reject" data-id="' + w.id + '">Reject</button></td></tr>').join('')
     : '<tr><td class="muted">No wins waiting.</td></tr>';
@@ -121,13 +125,13 @@ async function load() {
     : '<tr><td class="muted">No cards yet. Add one above; players can only win while cards are in stock.</td></tr>';
 
   $('wins').innerHTML = d.wins.length
-    ? '<tr><th>#</th><th>Wallet</th><th>Milestone</th><th>Card</th><th>Status</th><th>Transaction</th></tr>' + d.wins.map((w) =>
-        '<tr><td>' + w.id + '</td><td><code>' + short(w.wallet) + '</code></td><td>' + esc(w.milestone) + '</td><td>' + esc(w.card) + '</td><td><span class="pill ' + w.status + '">' + w.status + '</span></td><td><code>' + esc(w.tx) + '</code></td></tr>').join('')
+    ? '<tr><th>#</th><th>Wallet</th><th>Boss</th><th>Card</th><th>Status</th><th>Transaction</th></tr>' + d.wins.map((w) =>
+        '<tr><td>' + w.id + '</td><td><code>' + short(w.wallet) + '</code></td><td>' + esc(bossName(w.boss)) + '</td><td>' + esc(w.card) + '</td><td><span class="pill ' + w.status + '">' + w.status + '</span></td><td><code>' + esc(w.tx) + '</code></td></tr>').join('')
     : '<tr><td class="muted">No wins yet.</td></tr>';
 
-  $('odds').innerHTML = '<tr><th>Milestone</th><th>Chance</th><th>Earliest after first sign-in</th></tr>' +
-    d.milestones.map((m) => '<tr><td>' + esc(m.label) + '</td><td>' + m.odds + '%</td><td>' + m.minHours + ' h</td></tr>').join('') +
-    '<tr><td colspan="3" class="muted">Limits: ' + d.limits.maxWinsPerWallet + ' card per wallet, ' + d.limits.maxWinsPerDay + ' cards per day. Change these in the server settings.</td></tr>';
+  $('odds').innerHTML = '<tr><th>Boss</th><th>Base chance</th><th>At level 50</th><th>At level 100</th></tr>' +
+    d.bosses.map((b) => '<tr><td>' + esc(b.label) + '</td><td>' + b.odds + '%</td><td>' + oddsAt(b, 50, d.odds) + '%</td><td>' + oddsAt(b, 100, d.odds) + '%</td></tr>').join('') +
+    '<tr><td colspan="4" class="muted">Each wallet gets ' + d.battlesPerDay + ' card battles a day (every attempt counts), resetting at midnight ' + esc(d.timeZone) + ' time. The player\'s strongest Wildkin adds ' + d.odds.perLevel + '% per level, capped at ' + d.odds.cap + '%. Limits: ' + d.limits.maxWinsPerWallet + ' card per wallet, ' + d.limits.maxWinsPerDay + ' cards per day.</td></tr>';
 }
 
 $('loginForm').addEventListener('submit', async (e) => {

@@ -59,7 +59,7 @@ All text boxes use one sentence-aware paginator (`src/game/core/paginate.ts`): a
 
 ## Card rewards (optional)
 
-The game can give players a rare chance to win a real Collector Crypt trading card when they earn a badge or become Champion. It's off unless you build with the reward server's address:
+The game can give players a rare chance to win a real Collector Crypt trading card by beating CARD CHALLENGES: rematches against gym leaders, the Elite Four and the Champion, with teams that scale to the player's level, up to 5 a day. It's off unless you build with the reward server's address:
 
 ```bash
 VITE_REWARDS_API=https://your-rewards-server.example npm run build
