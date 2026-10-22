@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { DPad, PadButton } from './components/Controls';
 import { Roster } from './components/Roster';
 import { SettingsDialog } from './components/Settings';
+import { RewardsDialog, WinDialog } from './components/Rewards';
+import { earnedMilestones, Rewards, rewardsEnabled } from './rewards/client';
 import { CrashScreen } from './components/CrashScreen';
 import type { ErrorReport } from './game/core/diagnostics';
 import { recordError } from './game/core/diagnostics';
@@ -65,7 +67,10 @@ export default function App() {
   const [layout, setLayout] = useState<Layout>(() => layoutFor('auto'));
   const [scale, setScale] = useState(() => computeScale(layoutFor('auto')));
   const [muted, setMuted] = useState(false);
-  const [dialog, setDialog] = useState<null | 'how' | 'settings'>(null);
+  const [dialog, setDialog] = useState<null | 'how' | 'settings' | 'rewards' | 'win'>(null);
+  const [rewards] = useState(() => new Rewards());
+  const [wonCard, setWonCard] = useState('');
+  const claimRef = useRef<(force?: boolean) => void>(() => {});
   const [crash, setCrash] = useState<ErrorReport | null>(null);
 
   // boot the shared engine once
@@ -81,6 +86,7 @@ export default function App() {
     }
     g.hooks.onChange = () => setRev((n) => n + 1);
     g.hooks.onCrash = (r) => setCrash(r);
+    g.hooks.onMilestone = () => claimRef.current?.(true);
     window.__wildkin = g;
     setGame(g);
     // save at a safe moment when the tab is hidden, switched away from or closed
@@ -109,6 +115,36 @@ export default function App() {
       g.stop();
       delete window.__wildkin;
     };
+  }, []);
+
+  // Card rewards: send reached milestones to the server, which rolls each one once per wallet.
+  const lastClaim = useRef({ key: '', at: 0 });
+  claimRef.current = (force = false) => {
+    if (!rewardsEnabled || !game || !rewards.connected) return;
+    const ids = earnedMilestones(game.state);
+    const key = ids.join(',');
+    const prev = lastClaim.current;
+    if (!ids.length || (!force && prev && key === prev.key && Date.now() - prev.at < 10 * 60_000)) return;
+    lastClaim.current = { key, at: Date.now() };
+    rewards
+      .claim(ids)
+      .then((results) => {
+        const win = results.find((r) => r.won && r.status === 'rolled');
+        if (win) {
+          setWonCard(win.card ?? 'a real card');
+          setDialog('win');
+        }
+      })
+      .catch(() => {
+        // offline or not eligible right now: the next milestone or check tries again
+      });
+  };
+  useEffect(() => {
+    claimRef.current?.();
+  }, [game, rev]);
+  useEffect(() => {
+    const t = window.setInterval(() => claimRef.current?.(), 10 * 60_000);
+    return () => window.clearInterval(t);
   }, []);
 
   const mode = game?.options.controls ?? 'auto';
@@ -208,6 +244,11 @@ export default function App() {
           <a href="#wildex" className="hide-xs">
             Wildex
           </a>
+          {rewardsEnabled && (
+            <button type="button" className="link rw-nav" onClick={() => setDialog('rewards')}>
+              Card rewards
+            </button>
+          )}
           <button type="button" className="icon" onClick={() => setDialog('settings')} aria-label="Controls and saves" title="Controls and saves">
             <svg viewBox="0 0 16 16" aria-hidden>
               <path
@@ -388,6 +429,8 @@ export default function App() {
         </div>
       )}
       {dialog === 'settings' && game && <SettingsDialog game={game} layout={layout} onClose={() => setDialog(null)} />}
+      {dialog === 'rewards' && game && <RewardsDialog game={game} rewards={rewards} onClose={() => setDialog(null)} onClaimed={() => claimRef.current?.(true)} />}
+      {dialog === 'win' && <WinDialog card={wonCard} onClose={() => setDialog(null)} />}
     </div>
   );
 }

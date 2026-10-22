@@ -1044,6 +1044,7 @@ export class Overworld extends Scene {
         if (!s.badges.includes(name)) s.badges.push(name);
         g.sfx('levelup');
         await say(g, `{PLAYER} received the ${name} BADGE!`);
+        g.hooks.onMilestone?.('badge:' + name);
       },
       async flash() {
         ow.flashT = 12;

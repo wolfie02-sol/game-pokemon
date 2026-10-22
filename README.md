@@ -57,6 +57,16 @@ All text boxes use one sentence-aware paginator (`src/game/core/paginate.ts`): a
 - Save/continue via localStorage, save codes for moving between devices.
 - WebAudio chiptune soundtrack (16 tracks) and synthesized sound effects, with a mute button.
 
+## Card rewards (optional)
+
+The game can give players a rare chance to win a real Collector Crypt trading card when they earn a badge or become Champion. It's off unless you build with the reward server's address:
+
+```bash
+VITE_REWARDS_API=https://your-rewards-server.example npm run build
+```
+
+With it set, a **Card rewards** button appears in the top bar where players connect a Solana wallet. The server, admin page, anti-cheat rules and setup steps are in [`server/README.md`](server/README.md).
+
 ## Project layout
 
 ```

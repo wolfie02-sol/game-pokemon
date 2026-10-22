@@ -27,6 +27,8 @@ export interface GameHooks {
   onChange?: () => void;
   /** The game stopped on an error it could not recover from. */
   onCrash?: (r: ErrorReport) => void;
+  /** The player reached a story milestone ('badge:<NAME>' or 'champion'). Used by card rewards. */
+  onMilestone?: (id: string) => void;
 }
 
 /**

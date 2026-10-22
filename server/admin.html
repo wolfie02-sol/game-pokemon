@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wildkin Card Rewards Admin</title>
+<style>
+  :root { --bg:#f3f1ea; --panel:#fffdf7; --ink:#20251f; --muted:#6b7067; --line:#ddd8c8; --accent:#2f6b4f; --warn:#a4552a; --bad:#a33232; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, sans-serif; padding:24px max(16px, 4vw) 60px; }
+  h1 { font-size:24px; margin:0 0 4px; }
+  h2 { font-size:17px; margin:0 0 10px; }
+  .muted { color:var(--muted); }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px; margin-top:16px; }
+  .stats { display:flex; flex-wrap:wrap; gap:20px; }
+  .stat b { display:block; font-size:22px; font-variant-numeric:tabular-nums; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+  .scroll { overflow-x:auto; }
+  code { font-size:12px; word-break:break-all; }
+  button { font:inherit; border:1px solid var(--line); background:#fff; border-radius:6px; padding:5px 10px; cursor:pointer; }
+  button.go { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.no { color:var(--bad); }
+  button:disabled { opacity:.5; cursor:default; }
+  input { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; min-width:0; }
+  form { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .pill { display:inline-block; padding:1px 8px; border-radius:999px; font-size:12px; font-weight:600; background:#eee; }
+  .pending { background:#fff0c8; } .sent { background:#d6f0dd; } .rejected { background:#eee; color:var(--muted); } .failed { background:#f7d6d6; color:var(--bad); }
+  .warn { color:var(--warn); }
+  #msg { margin-top:12px; min-height:1.5em; }
+  #msg.err { color:var(--bad); }
+</style>
+</head>
+<body>
+<h1>Card rewards admin</h1>
+<p class="muted" id="sub">Sign in with the admin password to manage prize cards and approve wins.</p>
+
+<section id="login">
+  <form id="loginForm">
+    <label for="pw">Admin password</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <button class="go" type="submit">Sign in</button>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <section>
+    <div class="stats" id="stats"></div>
+    <ul id="warnings" class="warn"></ul>
+  </section>
+
+  <section>
+    <h2>Waiting for your approval</h2>
+    <p class="muted">Check each winner before sending: a brand-new wallet, many wallets from the same funder, or impossible timing can mean cheating. Approving sends the card from the prize wallet right away.</p>
+    <div class="scroll"><table id="pending"></table></div>
+  </section>
+
+  <section>
+    <h2>Prize cards</h2>
+    <p class="muted">Send a card from Collector Crypt to the prize wallet <code id="prizeWallet"></code>, then add it here with its mint address.</p>
+    <form id="cardForm">
+      <input id="mint" placeholder="Card mint address" required size="44">
+      <input id="name" placeholder="Card name (e.g. Charizard PSA 9)" required>
+      <input id="value" placeholder="Value in USD" inputmode="decimal" size="10">
+      <button class="go" type="submit">Add card</button>
+    </form>
+    <div class="scroll"><table id="cards"></table></div>
+  </section>
+
+  <section>
+    <h2>All wins</h2>
+    <div class="scroll"><table id="wins"></table></div>
+  </section>
+
+  <section>
+    <h2>Drop odds</h2>
+    <div class="scroll"><table id="odds"></table></div>
+  </section>
+  <p id="msg"></p>
+</div>
+
+<script>
+let pw = '';
+try { pw = sessionStorage.getItem('adminpw') || ''; } catch {}
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const when = (t) => (t ? new Date(t).toLocaleString() : '');
+const short = (a) => (a ? a.slice(0, 4) + '…' + a.slice(-4) : '');
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, { ...opts, headers: { 'content-type': 'application/json', authorization: 'Bearer ' + pw, ...(opts.headers || {}) } });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Request failed (' + res.status + ')');
+  return data;
+}
+function say(text, err) { $('msg').textContent = text; $('msg').className = err ? 'err' : ''; }
+
+async function load() {
+  const d = await api('/api/admin/overview');
+  $('login').hidden = true; $('app').hidden = false;
+  $('sub').textContent = 'Chain: ' + d.chain + (d.gate ? ' · Token gate: ' + d.gate.min.toLocaleString() + ' tokens' : ' · Token gate OFF');
+  $('prizeWallet').textContent = d.prizeWallet;
+  const s = d.stats;
+  $('stats').innerHTML = [['Players', s.players], ['Rolls', s.rolls], ['Pending', s.pending], ['Sent', s.sent], ['Cards in stock', s.cardsAvailable]]
+    .map(([l, v]) => '<div class="stat"><b>' + v + '</b><span class="muted">' + l + '</span></div>').join('');
+  $('warnings').innerHTML = d.warnings.map((w) => '<li>' + esc(w) + '</li>').join('');
+
+  const pending = d.wins.filter((w) => w.status === 'pending' || w.status === 'failed');
+  $('pending').innerHTML = pending.length
+    ? '<tr><th>#</th><th>Wallet</th><th>Milestone</th><th>Card</th><th>Won</th><th></th></tr>' + pending.map((w) =>
+        '<tr><td>' + w.id + '</td><td><code>' + esc(w.wallet) + '</code></td><td>' + esc(w.milestone) + '</td><td>' + esc(w.card) +
+        (w.value_usd ? ' ($' + w.value_usd + ')' : '') + (w.error ? '<br><span class="warn">' + esc(w.error) + '</span>' : '') + '</td><td>' + when(w.created_at) +
+        '</td><td><button class="go" data-act="approve" data-id="' + w.id + '">Send card</button> <button class="no" data-act="reject" data-id="' + w.id + '">Reject</button></td></tr>').join('')
+    : '<tr><td class="muted">No wins waiting.</td></tr>';
+
+  $('cards').innerHTML = d.cards.length
+    ? '<tr><th>Card</th><th>Mint</th><th>Value</th><th>Status</th><th></th></tr>' + d.cards.map((c) =>
+        '<tr><td>' + esc(c.name) + '</td><td><code>' + esc(c.mint) + '</code></td><td>' + (c.value_usd != null ? '$' + c.value_usd : '') + '</td><td><span class="pill">' + c.status + '</span></td><td>' +
+        (c.status === 'available' ? '<button class="no" data-act="remove" data-mint="' + esc(c.mint) + '">Remove</button>' : '') + '</td></tr>').join('')
+    : '<tr><td class="muted">No cards yet. Add one above; players can only win while cards are in stock.</td></tr>';
+
+  $('wins').innerHTML = d.wins.length
+    ? '<tr><th>#</th><th>Wallet</th><th>Milestone</th><th>Card</th><th>Status</th><th>Transaction</th></tr>' + d.wins.map((w) =>
+        '<tr><td>' + w.id + '</td><td><code>' + short(w.wallet) + '</code></td><td>' + esc(w.milestone) + '</td><td>' + esc(w.card) + '</td><td><span class="pill ' + w.status + '">' + w.status + '</span></td><td><code>' + esc(w.tx) + '</code></td></tr>').join('')
+    : '<tr><td class="muted">No wins yet.</td></tr>';
+
+  $('odds').innerHTML = '<tr><th>Milestone</th><th>Chance</th><th>Earliest after first sign-in</th></tr>' +
+    d.milestones.map((m) => '<tr><td>' + esc(m.label) + '</td><td>' + m.odds + '%</td><td>' + m.minHours + ' h</td></tr>').join('') +
+    '<tr><td colspan="3" class="muted">Limits: ' + d.limits.maxWinsPerWallet + ' card per wallet, ' + d.limits.maxWinsPerDay + ' cards per day. Change these in the server settings.</td></tr>';
+}
+
+$('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  pw = $('pw').value;
+  try { await load(); try { sessionStorage.setItem('adminpw', pw); } catch {} say(''); } catch (err) { say(err.message, true); }
+});
+
+$('cardForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    await api('/api/admin/cards', { method: 'POST', body: JSON.stringify({ mint: $('mint').value.trim(), name: $('name').value.trim(), valueUsd: $('value').value.trim() }) });
+    $('cardForm').reset();
+    say('Card added.');
+    await load();
+  } catch (err) { say(err.message, true); }
+});
+
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-act]');
+  if (!b) return;
+  const act = b.dataset.act;
+  if (b.dataset.armed !== '1') {
+    b.dataset.armed = '1';
+    b.textContent = act === 'approve' ? 'Confirm send' : act === 'reject' ? 'Confirm reject' : 'Confirm remove';
+    setTimeout(() => { if (b.isConnected) { b.dataset.armed = ''; b.textContent = act === 'approve' ? 'Send card' : act === 'reject' ? 'Reject' : 'Remove'; } }, 4000);
+    return;
+  }
+  b.disabled = true;
+  try {
+    if (act === 'remove') await api('/api/admin/cards/' + encodeURIComponent(b.dataset.mint), { method: 'DELETE' });
+    else {
+      const r = await api('/api/admin/wins/' + b.dataset.id + '/' + act, { method: 'POST' });
+      say(act === 'approve' ? 'Card sent. Transaction: ' + r.tx : 'Win rejected; the card is back in stock.');
+    }
+    await load();
+  } catch (err) { say(err.message, true); b.disabled = false; }
+});
+
+if (pw) load().catch(() => { $('login').hidden = false; });
+</script>
+</body>
+</html>

@@ -554,6 +554,7 @@ export function build(W: World) {
     await c.say("{RIVAL}: Heh. Guess I'll just have to become CHAMPION after you. Congrats, {PLAYER}.");
     const first = !c.flag('champion');
     c.set('champion');
+    c.g.hooks.onMilestone?.('champion');
     await c.g.open(new EndingScene());
     for (const m of c.s.party) healMon(m);
     c.s.heal = { map: 'home', x: 2, y: 5 };

@@ -983,3 +983,74 @@ kbd {
   align-self: flex-end;
   margin-right: 2px;
 }
+
+/* ---------- card rewards ---------- */
+.rewards .rw-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rewards .rw-row .pill-btn {
+  margin-top: 0;
+}
+.rewards .rw-ok {
+  color: #6fd08c;
+  font-weight: 600;
+}
+.rewards .rw-bad {
+  color: #f08a7a;
+  font-weight: 600;
+}
+.rewards .rw-muted {
+  color: var(--muted);
+}
+.rewards .rw-test {
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.rewards .rw-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.rewards .rw-table td {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+.rewards .rw-table td + td {
+  padding-left: 10px;
+}
+.rewards .rw-num {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  text-align: right;
+  width: 3.5em;
+}
+.rewards .rw-wins {
+  margin: 0;
+}
+.rewards .rw-note {
+  font-size: 12px;
+  margin-top: 14px;
+}
+.rewards .rw-msg {
+  color: var(--ink);
+}
+.rewards.rw-win {
+  text-align: center;
+}
+.rewards .rw-kicker {
+  margin: 0;
+  color: var(--accent);
+  font-family: var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+.rw-nav {
+  white-space: nowrap;
+}
