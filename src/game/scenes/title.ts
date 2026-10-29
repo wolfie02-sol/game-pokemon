@@ -1,5 +1,5 @@
 import { creatureSprite } from '../art/creatures';
-import { charFrame, charSprites, LOOKS } from '../art/people';
+import { charFrame, charSprites, drawChar, LOOKS } from '../art/people';
 import { drawText, drawTextScaled, textWidth } from '../core/font';
 import type { Game } from '../core/game';
 import { box, cursor, rect } from '../core/gfx';
@@ -140,7 +140,7 @@ export class TitleScene extends Scene {
     const slide = this.monT < 20 ? (20 - this.monT) * 6 : this.monT > 220 ? -(this.monT - 220) * 6 : 0;
     c.drawImage(creatureSprite(sp), 92 + slide, 72);
     const fr = charFrame(charSprites(LOOKS.player), 'right', 0);
-    c.drawImage(fr, 0, 0, 16, 16, 30, 82, 32, 32);
+    drawChar(c, fr, 22, 120, 2);
 
     if (this.stage === 'press') {
       this.g.button(this, 0, 0, 160, 144, 'a');
@@ -224,18 +224,18 @@ class IntroScene extends Scene {
     rect(c, 0, 0, 160, 144, '#f8f4e8');
     rect(c, 0, 70, 160, 26, '#efe6d0');
     const sc = 1 - this.shrink;
-    const drawChar = (look: keyof typeof LOOKS, x: number) => {
+    const drawIntro = (look: keyof typeof LOOKS, x: number) => {
       const fr = charFrame(charSprites(LOOKS[look]), 'down', 0);
-      const s = Math.max(1, Math.round(4 * sc));
-      c.drawImage(fr, 0, 0, 16, 16, x - (16 * s) / 2, 86 - 16 * s, 16 * s, 16 * s);
+      const s = Math.max(0, 3 * sc);
+      drawChar(c, fr, x - (fr.width * s) / 2, 100, s);
     };
-    if (this.show === 'prof') drawChar('prof', 80);
+    if (this.show === 'prof') drawIntro('prof', 80);
     if (this.show === 'mon') {
-      drawChar('prof', 44);
-      c.drawImage(creatureSprite(7), 92, 38);
+      drawIntro('prof', 36);
+      c.drawImage(creatureSprite(1), 88, 40);
     }
-    if (this.show === 'player') drawChar('player', 80);
-    if (this.show === 'rival') drawChar('rival', 80);
+    if (this.show === 'player') drawIntro('player', 80);
+    if (this.show === 'rival') drawIntro('rival', 80);
   }
 }
 

@@ -1,108 +1,14 @@
-/** Original 16x16 overworld character sprites with palette-swapped looks. */
+/**
+ * Overworld characters from Pokémon Claude Red (16×24, three walk frames per direction).
+ * Each look is one of that project's cast definitions. See docs/sprite-map.md.
+ */
 import type { Dir } from '../core/input';
-import { fromStrings, mirror, mix } from './pixel';
+import { castOf, makeCharacterFrames, surfaceToCanvas } from './claude-red/bridge';
+import { fromStrings } from './pixel';
 
 export interface Look {
-  style: 'cap' | 'short' | 'long';
-  hair: string;
-  /** cap colour (cap style only) */
-  cap?: string;
-  shirt: string;
-  pants?: string;
-  shoes?: string;
-  skin?: string;
-}
-
-const DOWN0 = [
-  '.....kkkkkk.....',
-  '....khhhhhhk....',
-  '...khhHHHHhhk...',
-  '...khhhhhhhhk...',
-  '..kkhhhhhhhhkk..',
-  '..kkkkkkkkkkkk..',
-  '...kssssssssk...',
-  '...ksessssesk...',
-  '...kssssssssk...',
-  '....kssssssk....',
-  '...kcwccccwck...',
-  '..ksccccccccsk..',
-  '..kskccccccksk..',
-  '...kkppppppkk...',
-  '....kppkkppk....',
-  '....kbbkkbbk....',
-];
-const WALK_DOWN_LEGS = ['...kkppppppkk...', '....kppkkpk.....', '....kbbk.kk.....'];
-
-const UP0 = [
-  '.....kkkkkk.....',
-  '....khhhhhhk....',
-  '...khhHHHHhhk...',
-  '...khhhhhhhhk...',
-  '...khhhhhhhhk...',
-  '...khhhhhhhhk...',
-  '...kaaaaaaaak...',
-  '...kaaaaaaaak...',
-  '...ksaaaaaask...',
-  '....kssssssk....',
-  '...kcCCCCCCck...',
-  '..ksCCCCCCCCsk..',
-  '..kskccccccksk..',
-  '...kkppppppkk...',
-  '....kppkkppk....',
-  '....kbbkkbbk....',
-];
-
-const LEFT0 = [
-  '.....kkkkkk.....',
-  '....khhhhhhk....',
-  '...khHHHhhhhk...',
-  '...khhhhhhhhk...',
-  '..kkkkhhhhhhk...',
-  '..kkkkkkkkkkk...',
-  '...ksssaaaaak...',
-  '...kesssaaaak...',
-  '...ksssssaaak...',
-  '....ksssssk.....',
-  '....kcccccck....',
-  '....kcsccCck....',
-  '....kcsccCck....',
-  '....kkppppkk....',
-  '.....kppppk.....',
-  '.....kbbbbk.....',
-];
-const WALK_LEFT_LEGS = ['....kkppppkk....', '....kpk..kpk....', '...kbbk..kbbk...'];
-
-function setChar(row: string, i: number, ch: string) {
-  return row.slice(0, i) + ch + row.slice(i + 1);
-}
-
-function styled(base: string[], dir: 'down' | 'up' | 'left', style: Look['style']): string[] {
-  const r = [...base];
-  if (style === 'cap') return r;
-  if (dir === 'down') {
-    r[4] = '...khhhhhhhhk...';
-    r[5] = '...khhhhhhhhk...';
-    r[6] = '...khsssssshk...';
-  } else if (dir === 'up') {
-    // back of head is already hair
-  } else {
-    r[4] = '...khhhhhhhhk...';
-    r[5] = '...khhhhhhhhk...';
-  }
-  if (style === 'long') {
-    for (let y = 6; y <= 10; y++) {
-      if (dir === 'down' || dir === 'up') {
-        r[y] = setChar(setChar(setChar(setChar(r[y], 2, 'k'), 3, 'a'), 12, 'a'), 13, 'k');
-      } else {
-        r[y] = setChar(setChar(setChar(r[y], 11, 'a'), 12, 'a'), 13, 'k');
-      }
-    }
-  }
-  return r;
-}
-
-function withLegs(base: string[], legs: string[]): string[] {
-  return [...base.slice(0, 13), ...legs];
+  id: string;
+  [key: string]: unknown;
 }
 
 export interface CharSprites {
@@ -112,105 +18,111 @@ export interface CharSprites {
   right: HTMLCanvasElement[];
 }
 
+/** Native frame size of a Claude Red overworld character. */
+export const CHAR_W = 16;
+export const CHAR_H = 24;
+
 const cache = new Map<string, CharSprites>();
 
+function L(id: string): Look {
+  return { id, ...castOf(id) };
+}
+
 export function charSprites(look: Look): CharSprites {
-  const key = JSON.stringify(look);
-  const hit = cache.get(key);
+  const hit = cache.get(look.id);
   if (hit) return hit;
-  const hairCol = look.hair;
-  const top = look.style === 'cap' ? (look.cap ?? '#e04838') : hairCol;
-  const pal: Record<string, string> = {
-    k: '#201a2e',
-    h: top,
-    H: mix(top, '#ffffff', 0.35),
-    a: hairCol,
-    s: look.skin ?? '#f8d0a8',
-    e: '#201a2e',
-    c: look.shirt,
-    C: mix(look.shirt, '#1a1030', 0.25),
-    w: '#f8f4e8',
-    p: look.pants ?? '#34384e',
-    b: look.shoes ?? '#a84838',
-  };
-  const d0 = styled(DOWN0, 'down', look.style);
-  const u0 = styled(UP0, 'up', look.style);
-  const l0 = styled(LEFT0, 'left', look.style);
-  const dw = fromStrings(withLegs(d0, WALK_DOWN_LEGS), pal);
-  const uw = fromStrings(withLegs(u0, WALK_DOWN_LEGS), pal);
-  const left = [fromStrings(l0, pal), fromStrings(withLegs(l0, WALK_LEFT_LEGS), pal)];
+  const frames = makeCharacterFrames(look);
+  const paint = (list: { w: number; h: number; data: Uint32Array }[]) => list.map(surfaceToCanvas);
   const s: CharSprites = {
-    down: [fromStrings(d0, pal), dw, mirror(dw)],
-    up: [fromStrings(u0, pal), uw, mirror(uw)],
-    left,
-    right: left.map(mirror),
+    down: paint(frames.down),
+    up: paint(frames.up),
+    left: paint(frames.left),
+    right: paint(frames.right),
   };
-  cache.set(key, s);
+  cache.set(look.id, s);
   return s;
 }
 
-/** Frame for a direction and walk phase (0 = standing). */
+/** Frame for a direction and walk phase (0 = standing, 1 and 2 = the two step frames). */
 export function charFrame(s: CharSprites, dir: Dir, phase: number): HTMLCanvasElement {
-  if (dir === 'left' || dir === 'right') return s[dir][phase === 0 ? 0 : 1];
-  return s[dir][phase];
+  const frames = s[dir];
+  const i = phase <= 0 ? 0 : 1 + ((phase - 1) % Math.max(1, frames.length - 1));
+  return frames[Math.min(i, frames.length - 1)];
 }
 
+/**
+ * Draw a character so its feet sit on `feetY`. `x` is the left edge.
+ * Scale 1 is the overworld (16×24). Battle and the title use a larger scale.
+ */
+export function drawChar(c: CanvasRenderingContext2D, frame: HTMLCanvasElement, x: number, feetY: number, scale = 1) {
+  const w = frame.width * scale;
+  const h = frame.height * scale;
+  c.drawImage(frame, Math.round(x), Math.round(feetY - h), Math.round(w), Math.round(h));
+}
+
+/**
+ * Old 16×16 sprites were drawn 4px above the tile, so their feet landed 12px
+ * below the tile top. Taller Claude Red sprites keep that same foot line.
+ */
+export const CHAR_FEET = 12;
+
 export const LOOKS: Record<string, Look> = {
-  player: { style: 'cap', cap: '#e04838', hair: '#3a2a28', shirt: '#3870d8', pants: '#2a3048', shoes: '#c84838' },
-  rival: { style: 'short', hair: '#e8a038', shirt: '#9850c0', pants: '#30304a', shoes: '#383048' },
-  prof: { style: 'short', hair: '#d8d8e0', shirt: '#f0f0f8', pants: '#5a5070', shoes: '#584038' },
-  mom: { style: 'long', hair: '#8a4a30', shirt: '#f07890', pants: '#3a3a58' },
-  keeper: { style: 'long', hair: '#f090b0', shirt: '#f8f8ff', pants: '#f8f8ff', shoes: '#f090b0' },
-  clerk: { style: 'cap', cap: '#4c78d8', hair: '#3a2a28', shirt: '#4c78d8', pants: '#2a3048' },
-  grunt: { style: 'long', hair: '#3a3048', shirt: '#3a3048', pants: '#2a2236', shoes: '#e050a0' },
-  sable: { style: 'long', hair: '#c8c0d8', shirt: '#5a3878', pants: '#2a2236', shoes: '#e050a0' },
-  nyx: { style: 'long', hair: '#e050a0', shirt: '#2e2442', pants: '#1e1830', shoes: '#e050a0' },
-  mossa: { style: 'long', hair: '#58a048', shirt: '#e8d8a0', pants: '#6a5038' },
-  vulk: { style: 'short', hair: '#e04020', shirt: '#f08030', pants: '#3a2a28' },
-  isolde: { style: 'long', hair: '#d8f0ff', shirt: '#5890d8', pants: '#e8f0f8', shoes: '#5890d8' },
-  elowen: { style: 'long', hair: '#8858c0', shirt: '#f0e0ff', pants: '#8858c0', shoes: '#d8a838' },
-  youngster: { style: 'cap', cap: '#f0c030', hair: '#5a3a28', shirt: '#f0c030', pants: '#3858a8' },
-  lass: { style: 'long', hair: '#a86838', shirt: '#f080a8', pants: '#f8f4e8' },
-  hiker: { style: 'cap', cap: '#8a5a30', hair: '#3a2a28', shirt: '#58904c', pants: '#6a5038' },
-  oldman: { style: 'short', hair: '#e8e8f0', shirt: '#988870', pants: '#5a4a38' },
-  girl: { style: 'long', hair: '#2a2028', shirt: '#58b8a8', pants: '#3a3a58' },
-  boy: { style: 'short', hair: '#5a3a28', shirt: '#e05848', pants: '#3a3a58' },
-  gardener: { style: 'cap', cap: '#e8d8a0', hair: '#5a3a28', shirt: '#68a848', pants: '#6a5038' },
-  firebreather: { style: 'short', hair: '#f8d040', shirt: '#d84830', pants: '#2a2236' },
-  skier: { style: 'cap', cap: '#78c8f0', hair: '#c88848', shirt: '#f8f8ff', pants: '#5890d8' },
-  birdkeeper: { style: 'cap', cap: '#58a848', hair: '#3a2a28', shirt: '#c8a868', pants: '#585040' },
-  ace: { style: 'short', hair: '#2a2028', shirt: '#f8f4e8', pants: '#c83848', shoes: '#c83848' },
-  scholar: { style: 'short', hair: '#6a4a38', shirt: '#7068a8', pants: '#3a3458' },
-  guard: { style: 'cap', cap: '#3858a8', hair: '#3a2a28', shirt: '#3858a8', pants: '#2a3048', shoes: '#201a2e' },
-  sailor: { style: 'cap', cap: '#f8f8ff', hair: '#3a2a28', shirt: '#4878c8', pants: '#f8f8ff' },
-  fisher: { style: 'cap', cap: '#68904c', hair: '#5a3a28', shirt: '#d8c890', pants: '#4a5870' },
-  swimmer: { style: 'short', hair: '#e8b038', shirt: '#f8c8a0', pants: '#3878d8', shoes: '#f8c8a0', skin: '#f8c8a0' },
-  mystic: { style: 'long', hair: '#e8e0f0', shirt: '#6858a0', pants: '#4a3c78', shoes: '#2a2238' },
-  blackbelt: { style: 'short', hair: '#2a2028', shirt: '#f8f4e8', pants: '#f8f4e8', shoes: '#2a2028' },
-  beauty: { style: 'long', hair: '#f0c040', shirt: '#e85090', pants: '#e85090', shoes: '#f8f8ff' },
-  gentleman: { style: 'short', hair: '#a8a0a0', shirt: '#4a3c58', pants: '#2a2236', shoes: '#201a2e' },
-  engineer: { style: 'cap', cap: '#f0c030', hair: '#3a2a28', shirt: '#e88830', pants: '#4a5870' },
-  scientist: { style: 'short', hair: '#58a8c8', shirt: '#f0f0f8', pants: '#5a6080', shoes: '#384050' },
-  busker: { style: 'short', hair: '#c83848', shirt: '#2a2a3a', pants: '#3a5888', shoes: '#c83848' },
-  racer: { style: 'cap', cap: '#e83838', hair: '#2a2028', shirt: '#f8f8ff', pants: '#2a2028', shoes: '#e83838' },
-  tamer: { style: 'cap', cap: '#8a5a30', hair: '#2a2028', shirt: '#a87848', pants: '#4a3828' },
-  captain: { style: 'cap', cap: '#283868', hair: '#f8f8ff', shirt: '#283868', pants: '#283868', shoes: '#201a2e' },
-  corvin: { style: 'short', hair: '#585068', shirt: '#2e2442', pants: '#1e1830', shoes: '#58c0a0' },
-  garrick: { style: 'short', hair: '#6a5038', shirt: '#988060', pants: '#5a4a38', shoes: '#3a2a28' },
-  nerissa: { style: 'long', hair: '#e86048', shirt: '#4890f0', pants: '#f8f4e8', shoes: '#4890f0' },
-  cass: { style: 'cap', cap: '#f0c828', hair: '#f8e8a0', shirt: '#4a5870', pants: '#2a3048', shoes: '#f0c828' },
-  silas: { style: 'short', hair: '#583878', shirt: '#2e2442', pants: '#58304a', shoes: '#a858c0' },
-  orin: { style: 'long', hair: '#2a2028', shirt: '#f060a0', pants: '#4a2840', shoes: '#f060a0' },
-  thorne: { style: 'short', hair: '#2a2028', shirt: '#c04838', pants: '#2a2028', shoes: '#c04838' },
-  wren: { style: 'long', hair: '#f8f8ff', shirt: '#98a8f0', pants: '#5868a8', shoes: '#f8f8ff' },
-  morrigan: { style: 'long', hair: '#a8a0c8', shirt: '#3a2a58', pants: '#2a1e40', shoes: '#6858a0' },
-  vesper: { style: 'short', hair: '#e04838', shirt: '#7058e8', pants: '#2a2048', shoes: '#f0c040' },
-  mime: { style: 'short', hair: '#f8f8ff', shirt: '#f0b0c8', pants: '#5878d8', shoes: '#f8f8ff', skin: '#f8f4f8' },
+  player: L('red'),
+  rival: L('blue'),
+  prof: L('oak'),
+  mom: L('mom'),
+  keeper: L('nurse'),
+  clerk: L('clerk'),
+  grunt: L('rocket'),
+  sable: L('channeler'),
+  nyx: L('giovanni'),
+  corvin: L('rocket'),
+  garrick: L('brock'),
+  nerissa: L('misty'),
+  cass: L('surge'),
+  mossa: L('erika'),
+  silas: L('koga'),
+  orin: L('sabrina'),
+  vulk: L('blaine'),
+  isolde: L('lorelei'),
+  thorne: L('bruno'),
+  wren: L('cooltrainer_f'),
+  morrigan: L('agatha'),
+  vesper: L('lance'),
+  elowen: L('cooltrainer_f'),
+  youngster: L('youngster'),
+  lass: L('girl'),
+  hiker: L('hiker'),
+  oldman: L('gramps'),
+  girl: L('little_girl'),
+  boy: L('little_boy'),
+  gardener: L('safari_zone_worker'),
+  firebreather: L('biker'),
+  skier: L('sailor'),
+  birdkeeper: L('gym_guide'),
+  ace: L('cooltrainer_m'),
+  scholar: L('super_nerd'),
+  guard: L('guard'),
+  sailor: L('sailor'),
+  fisher: L('fisher'),
+  swimmer: L('swimmer'),
+  mystic: L('channeler'),
+  blackbelt: L('bruno'),
+  beauty: L('beauty'),
+  gentleman: L('gentleman'),
+  engineer: L('silph_worker_m'),
+  scientist: L('scientist'),
+  busker: L('gambler'),
+  racer: L('bike_shop_clerk'),
+  tamer: L('warden'),
+  captain: L('captain'),
+  mime: L('rocker'),
 };
 
 // ---------- small overworld objects ----------
 
 let itemBall: HTMLCanvasElement | null = null;
+/** Poké Ball from Claude Red's object sprites, drawn on the 16×16 item tile. */
 export function itemBallSprite(): HTMLCanvasElement {
   if (itemBall) return itemBall;
   itemBall = fromStrings(
@@ -219,25 +131,26 @@ export function itemBallSprite(): HTMLCanvasElement {
       '................',
       '................',
       '................',
-      '.....kkkkkk.....',
-      '....krrlrrrk....',
-      '...krrlrrrrrk...',
-      '...krrrrrrrrk...',
-      '...kkkkwwkkkk...',
-      '...kwwkwwkwwk...',
-      '...kwwwkkwwwk...',
-      '....kwwwwwwk....',
-      '.....kkkkkk.....',
       '................',
+      '.....OOOOOO.....',
+      '....OLRRRRRO....',
+      '...ORLRRRRRrO...',
+      '...ORRRRRRRrO...',
+      '...OOOOWWOOOO...',
+      '...OWWOWKOWwO...',
+      '...OWWWOOWWwO...',
+      '....OWWWWWwO....',
+      '.....OOOOOO.....',
       '................',
       '................',
     ],
-    { k: '#201a2e', r: '#e04848', l: '#ff9898', w: '#f8f4e8' },
+    { O: '#1b1a2e', R: '#e04848', r: '#a82838', L: '#ff9a8a', W: '#f8f8f8', w: '#c8c8d8', K: '#3a3a48' },
   );
   return itemBall;
 }
 
 let bubble: HTMLCanvasElement | null = null;
+/** Alert bubble. Claude Red has no separate emote sprite, so this one stays. */
 export function exclaimSprite(): HTMLCanvasElement {
   if (bubble) return bubble;
   bubble = fromStrings(

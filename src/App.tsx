@@ -295,9 +295,10 @@ export default function App() {
       <section className="info" aria-labelledby="intro-title">
         <h1 id="intro-title">Wildkin: Ember Edition, a handheld-style monster-catching RPG in your browser</h1>
         <p>
-          Wildkin is a free, original fan tribute to the classic pocket monster-catching adventures. It runs in any browser on a computer,
-          tablet or phone with no download. Explore the region of Varrow across eleven towns and twenty-five routes, catch 151 original creatures, earn
-          eight gym badges, stop the Hollow Order and climb to the Summit League. Every sprite, tile and chiptune is generated in code.
+          Wildkin is a free fan tribute to the classic pocket monster-catching adventures. It runs in any browser on a computer,
+          tablet or phone with no download. Explore the region of Varrow across eleven towns and twenty-five routes, catch 151 creatures, earn
+          eight gym badges, stop the Hollow Order and climb to the Summit League. Tiles and chiptunes are generated in code. Character and creature
+          sprites are drawn by code adapted from Pokémon Claude Red.
         </p>
         <nav className="linkrow" aria-label="Guide">
           <button type="button" className="link" onClick={() => setDialog('how')}>
@@ -357,7 +358,13 @@ export default function App() {
           <summary>How do types work?</summary>
           <p>There are 15 types. Flame beats Leaf, Frost and Swarm. Tide beats Flame, Earth and Stone. Volt beats Tide and Gale but cannot touch Earth. Brawl smashes Beast, Stone and Frost. Swarm and Shade are the only answers to Mind, and only Wyrm or Frost truly hurt a Wyrm. Gym guides drop hints.</p>
         </details>
-        <p className="disclaimer">Wildkin: Ember Edition is a free, non-commercial fan project with entirely original characters, creatures, art, music and story.</p>
+        <p className="disclaimer">
+          Wildkin: Ember Edition is a free, non-commercial fan project. Its maps, names, story, tiles and music are original. Overworld characters and
+          creature sprites are adapted from{' '}
+          <a href="https://github.com/levy-street/pokemon-claude-red">Pokémon Claude Red</a> by Levy Street (
+          <a href="https://claudered.dev/">claudered.dev</a>), a non-commercial fan remake with no licence. Pokémon is © Nintendo, Creatures and GAME FREAK.
+          This build is not affiliated with them.
+        </p>
       </section>
 
       {dialog === 'how' && (

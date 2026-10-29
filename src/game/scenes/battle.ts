@@ -1,5 +1,5 @@
 import { creatureSprite } from '../art/creatures';
-import { charFrame, charSprites, LOOKS } from '../art/people';
+import { charFrame, charSprites, drawChar, LOOKS } from '../art/people';
 import { silhouette } from '../art/pixel';
 import { drawText, padLeft } from '../core/font';
 import { paginate } from '../core/paginate';
@@ -1125,14 +1125,14 @@ export class BattleScene extends Modal<BattleResult> {
     if (this.trainerVis && this.o.trainer) {
       const look = LOOKS[this.o.trainer.look] ?? LOOKS.boy;
       const fr = charFrame(charSprites(look), 'down', 0);
-      c.drawImage(fr, 0, 0, 16, 16, Math.round(this.foeX), 0, 48, 48);
+      drawChar(c, fr, Math.round(this.foeX) + 8, 50, 2);
     } else if (this.foeVis && this.blink[0] % 8 < 5) {
       this.drawMon(c, this.foe.mon.sp, false, this.foeX + this.lunge[0], 2 + this.foeDy, this.foeScale, 50, this.foeWhite, 0);
     }
     // player side
     if (this.playerTrainerVis) {
       const fr = charFrame(charSprites(LOOKS.player), 'up', 0);
-      c.drawImage(fr, 0, 0, 16, 16, Math.round(this.meX), 48, 48, 48);
+      drawChar(c, fr, Math.round(this.meX) + 8, 96, 2);
     } else if (this.meVis && this.blink[1] % 8 < 5) {
       this.drawMon(c, this.me.mon.sp, true, this.meX + this.lunge[1], 46 + this.meDy, this.meScale, 96, false, 1);
     }
