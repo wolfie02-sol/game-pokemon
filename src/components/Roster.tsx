@@ -3,7 +3,7 @@ import { creatureSprite } from '../game/art/creatures';
 import { TYPE_COLORS } from '../game/core/gfx';
 import { ALL_SPECIES } from '../game/data/species';
 
-/** Field guide grid rendered from the same procedural sprites the game uses. */
+/** Field guide grid rendered from the same creature sprites the game uses. */
 export function Roster() {
   const entries = useMemo(
     () =>

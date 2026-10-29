@@ -1,6 +1,6 @@
 # Wildkin: Ember Edition
 
-An original, handheld-style monster-catching RPG that runs in the browser. The presentation (dark full-viewport page, a large pixel-perfect game screen, an on-screen D-pad with A/B/START/SELECT, unobtrusive guide links below) follows the structure of claudered.dev, while every creature, map, sprite, tune, name and line of dialogue is original.
+An original, handheld-style monster-catching RPG that runs in the browser. The presentation (dark full-viewport page, a large pixel-perfect game screen, an on-screen D-pad with A/B/START/SELECT, unobtrusive guide links below) follows the structure of claudered.dev. Maps, names, dialogue, tiles and music are original to this project. Overworld characters and creature sprites are drawn by code adapted from [Pokémon Claude Red](https://github.com/levy-street/pokemon-claude-red) ([claudered.dev](https://claudered.dev/)).
 
 ## Run it
 
@@ -65,7 +65,7 @@ src/
   components/                       D-pad, buttons, Wildex roster
   game/
     core/      game loop, scene stack, input, bitmap font, drawing helpers, audio synth, RNG
-    art/       procedural tiles, character sprites, creature sprite generator
+    art/       procedural tiles, Claude Red character and creature sprites
     data/      types chart, moves, species, items, trainers
     systems/   creature stats/exp, battle math, game state, save/load
     scenes/    title, overworld, dialog, battle, menus, shop, storage, evolution, ending
@@ -73,3 +73,14 @@ src/
 ```
 
 The engine is plain TypeScript drawing to a 160x144 canvas (scaled with `image-rendering: pixelated`). React only owns the surrounding page and talks to the game through the `Game` object.
+
+## Sprite attribution
+
+Overworld people and every creature sprite are rasterised at runtime by code vendored from **Pokémon Claude Red** by Levy Street:
+
+- Play it: [claudered.dev](https://claudered.dev/)
+- Source: [github.com/levy-street/pokemon-claude-red](https://github.com/levy-street/pokemon-claude-red)
+
+That project is a non-commercial fan remake and ships with no licence. This personal build uses its sprite renderer and species/character definitions with that IP risk accepted. The vendored files live in `src/game/art/claude-red/`. Wildkin names stay as they are; each one is drawn as the Kanto Pokémon listed in [docs/sprite-map.md](docs/sprite-map.md). Tiles, the exclamation bubble, music, maps and dialogue are not from Claude Red.
+
+Pokémon is © Nintendo, Creatures and GAME FREAK. This project is not affiliated with or endorsed by them.

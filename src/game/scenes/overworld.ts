@@ -1,5 +1,5 @@
 import { creatureIcon } from '../art/creatures';
-import { charFrame, charSprites, exclaimSprite, itemBallSprite, LOOKS } from '../art/people';
+import { CHAR_FEET, CHAR_H, CHAR_W, charFrame, charSprites, drawChar, exclaimSprite, itemBallSprite, LOOKS } from '../art/people';
 import { silhouette } from '../art/pixel';
 import { edgeFamily, edgeOverlay, joins, tileIdx, TILES, TS } from '../art/tiles';
 import { drawText } from '../core/font';
@@ -1132,7 +1132,7 @@ export class Overworld extends Scene {
       const prog = Math.max(Math.abs(n.ox), Math.abs(n.oy));
       const phase = n.moving && prog >= 4 && prog < 12 ? 1 + ((n.x + n.y) % 2) : 0;
       if (!n.moving && !this.moving && this.busy === 0 && this.fade === 0) {
-        this.g.region(this, { x: sx, y: sy - 4, w: TS, h: TS + 4, click: () => (this.clickTalk = n) });
+        this.g.region(this, { x: sx, y: sy + CHAR_FEET - CHAR_H, w: TS, h: CHAR_H, click: () => (this.clickTalk = n) });
       }
       const monLook = MON_LOOKS[n.def.look];
       list.push({
@@ -1145,12 +1145,13 @@ export class Overworld extends Scene {
             if (n.def.look === 'spirit') c.globalAlpha = 0.65 + 0.2 * Math.sin(g.frame / 15);
             c.drawImage(icon, sx, sy - 2 - (n.def.look === 'sleeper' ? 0 : bob));
             c.globalAlpha = 1;
-            if (n.emote > 0) c.drawImage(exclaimSprite(), sx, sy - 20);
+            if (n.emote > 0) c.drawImage(exclaimSprite(), sx, sy - 18);
             return;
           }
-          c.drawImage(charFrame(charSprites(look), n.dir, phase), sx, sy - 4);
+          const feet = sy + CHAR_FEET;
+          drawChar(c, charFrame(charSprites(look), n.dir, phase), sx, feet);
           this.grassOver(c, n.x + (n.moving && prog >= 8 ? DX[n.moving] : 0), n.y + (n.moving && prog >= 8 ? DY[n.moving] : 0), camX, camY);
-          if (n.emote > 0) c.drawImage(exclaimSprite(), sx, sy - 20);
+          if (n.emote > 0) c.drawImage(exclaimSprite(), sx, feet - CHAR_H - 14);
         },
       });
     }
@@ -1160,7 +1161,7 @@ export class Overworld extends Scene {
       draw: () => {
         const phase = this.moving && this.off % 16 >= 4 && this.off % 16 < 12 ? 1 + this.stepParity : 0;
         const sx = ppx - camX;
-        const sy = ppy - camY - 4 + jumpY;
+        const feet = ppy - camY + CHAR_FEET + jumpY;
         if (this.jump) {
           c.globalAlpha = 0.35;
           rect(c, sx + 3, ppy - camY + 12, 10, 3, '#000');
@@ -1171,14 +1172,15 @@ export class Overworld extends Scene {
           rect(c, sx + 1, ppy - camY + 9 + bob, 14, 5, '#201a2e');
           rect(c, sx + 2, ppy - camY + 10 + bob, 12, 3, '#f0b040');
           rect(c, sx + 3, ppy - camY + 10 + bob, 10, 1, '#fff0b0');
-          c.drawImage(charFrame(charSprites(LOOKS.player), this.dir, 0), 0, 0, 16, 12, sx, sy + bob - 2, 16, 12);
-        } else c.drawImage(charFrame(charSprites(LOOKS.player), this.dir, phase), sx, sy);
+          const fr = charFrame(charSprites(LOOKS.player), this.dir, 0);
+          c.drawImage(fr, 0, 0, CHAR_W, 12, sx, ppy - camY - 4 + bob, CHAR_W, 12);
+        } else drawChar(c, charFrame(charSprites(LOOKS.player), this.dir, phase), sx, feet);
         if (!this.jump) {
           const gx = this.moving && this.off >= 8 ? this.px + DX[this.moving] : this.px;
           const gy = this.moving && this.off >= 8 ? this.py + DY[this.moving] : this.py;
           this.grassOver(c, gx, gy, camX, camY);
         }
-        if (this.playerEmote > 0) c.drawImage(exclaimSprite(), sx, sy - 16);
+        if (this.playerEmote > 0) c.drawImage(exclaimSprite(), sx, feet - CHAR_H - 14);
       },
     });
     list.sort((a, b) => a.y - b.y);

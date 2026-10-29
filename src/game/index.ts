@@ -2,7 +2,7 @@ import { Game } from './core/game';
 import { TitleScene } from './scenes/title';
 import { Overworld } from './scenes/overworld';
 import { buildTiles, TILES, TS } from './art/tiles';
-import { charFrame, charSprites, itemBallSprite, LOOKS } from './art/people';
+import { CHAR_FEET, charFrame, charSprites, drawChar, itemBallSprite, LOOKS } from './art/people';
 import { allMaps } from './world/maps';
 import { newMon, newState, receiveMon, type GameState } from './systems/state';
 import { speciesByName } from './data/species';
@@ -40,7 +40,7 @@ export function debugApi(g: Game) {
           x.drawImage(d.variants ? d.variants[0] : d.frames[0], tx * TS, ty * TS);
         }
       for (const it of m.items) x.drawImage(itemBallSprite(), it.x * TS, it.y * TS);
-      for (const n of m.npcs) x.drawImage(charFrame(charSprites(LOOKS[n.look] ?? LOOKS.boy), n.dir, 0), n.x * TS, n.y * TS - 4);
+      for (const n of m.npcs) drawChar(x, charFrame(charSprites(LOOKS[n.look] ?? LOOKS.boy), n.dir, 0), n.x * TS, n.y * TS + CHAR_FEET);
       x.fillStyle = 'rgba(255,0,0,0.35)';
       for (const w of m.warps) x.fillRect(w.x * TS + 4, w.y * TS + 4, 8, 8);
       return c.toDataURL();
