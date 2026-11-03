@@ -238,6 +238,10 @@ export class Game {
       detachPointer();
     };
     const onRejection = (e: PromiseRejectionEvent) => {
+      // Browser extensions (crypto wallets like MetaMask especially) inject
+      // scripts into every page and sometimes fail on their own. Those errors
+      // aren't the game's, so don't let them crash it.
+      if (fromExtension(e.reason)) return;
       e.preventDefault();
       this.reportError(e.reason, 'async');
     };
@@ -376,4 +380,17 @@ export class Game {
   textRate(): number {
     return [0.5, 1, 3][this.options.textSpeed];
   }
+}
+
+const EXTENSION_URL = /(chrome|moz|safari(-web)?|ms-browser)-extension:\/\//;
+const WALLET_NOISE = /metamask|phantom|solflare|coinbase wallet|trust wallet|backpack/i;
+
+/** True for errors thrown by a browser extension's injected script rather than by the game. */
+export function fromExtension(err: unknown): boolean {
+  const e = err as { stack?: unknown; message?: unknown } | null;
+  const stack = typeof e?.stack === 'string' ? e.stack : '';
+  const message = typeof e?.message === 'string' ? e.message : typeof err === 'string' ? err : '';
+  if (EXTENSION_URL.test(stack)) return true;
+  // some wallets reject with a plain object and no stack
+  return !stack && WALLET_NOISE.test(message);
 }
